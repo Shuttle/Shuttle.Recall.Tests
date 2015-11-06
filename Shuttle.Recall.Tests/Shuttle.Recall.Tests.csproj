@@ -30,6 +30,15 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="nunit.framework">
+      <HintPath>..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
+    </Reference>
+    <Reference Include="Shuttle.Core.Infrastructure">
+      <HintPath>..\packages\shuttle-core-infrastructure.3.2.0\lib\net45-full\Shuttle.Core.Infrastructure.dll</HintPath>
+    </Reference>
+    <Reference Include="Shuttle.Recall.Core">
+      <HintPath>..\packages\shuttle-recall-core.1.3.0\lib\net45-full\Shuttle.Recall.Core.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -39,8 +48,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Class1.cs" />
+    <Compile Include="EventStoreFixture.cs" />
+    <Compile Include="OrderProcess\InvalidStatusChangeException.cs" />
+    <Compile Include="OrderProcess\OrderProcess.cs" />
+    <Compile Include="OrderProcess\StatusChanged.cs" />
+    <Compile Include="Order\ItemAdded.cs" />
+    <Compile Include="Order\Order.cs" />
+    <Compile Include="Order\OrderItem.cs" />
+    <Compile Include="Order\OrderSnapshot.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
