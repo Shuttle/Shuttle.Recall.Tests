@@ -66,7 +66,9 @@ namespace Shuttle.Recall.Tests
 			Assert.IsFalse(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled));
 
             store.Remove(orderId);
-            store.Remove(orderProcessId);
+
+		    orderProcessStream.Remove();
+            store.SaveEventStream(orderProcessStream);
             
             orderStream = store.Get(orderId);
             orderProcessStream = store.Get(orderProcessId);
