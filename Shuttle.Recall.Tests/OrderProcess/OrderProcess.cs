@@ -84,21 +84,21 @@ namespace Shuttle.Recall.Tests
 			switch (status)
 			{
 				case OrderProcessStatus.Open:
-					{
-						return false;
-					}
+				{
+					return false;
+				}
 				case OrderProcessStatus.Picking:
-					{
-						return Status == OrderProcessStatus.Open;
-					}
+				{
+					return Status == OrderProcessStatus.Open;
+				}
 				case OrderProcessStatus.Fulfilled:
-					{
-						return Status == OrderProcessStatus.Picking;
-					}
+				{
+					return Status == OrderProcessStatus.Picking;
+				}
 				case OrderProcessStatus.Cancelled:
-					{
-						return Status == OrderProcessStatus.Open;
-					}
+				{
+					return Status == OrderProcessStatus.Open;
+				}
 			}
 
 			return true;

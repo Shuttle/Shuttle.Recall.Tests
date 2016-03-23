@@ -1,6 +1,5 @@
 ﻿using System;
 using NUnit.Framework;
-using Shuttle.Recall.Core;
 
 namespace Shuttle.Recall.Tests
 {
@@ -35,13 +34,15 @@ namespace Shuttle.Recall.Tests
 			orderStream = store.Get(orderId);
 			orderStream.Apply(order);
 
-			Assert.AreEqual(orderTotal, order.Total(), "The total of the first re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
+			Assert.AreEqual(orderTotal, order.Total(),
+				"The total of the first re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
 
 			orderProcess = new OrderProcess(orderProcessId);
 			orderProcessStream = store.Get(orderProcessId);
 			orderProcessStream.Apply(orderProcess);
 
-            Assert.IsTrue(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled), "Should be able to change status to 'Fulfilled'");
+			Assert.IsTrue(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled),
+				"Should be able to change status to 'Fulfilled'");
 
 			orderStream.AddEvent(order.AddItem("4kg bag of potatoes", 5, 15.35));
 
@@ -57,27 +58,29 @@ namespace Shuttle.Recall.Tests
 			orderStream = store.Get(orderId);
 			orderStream.Apply(order);
 
-			Assert.AreEqual(orderTotal, order.Total(), "The total of the second re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
+			Assert.AreEqual(orderTotal, order.Total(),
+				"The total of the second re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
 
 			orderProcess = new OrderProcess(orderProcessId);
 			orderProcessStream = store.Get(orderProcessId);
 			orderProcessStream.Apply(orderProcess);
 
-            Assert.IsFalse(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled), "Should not be able to change status to 'Fulfilled'");
+			Assert.IsFalse(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled),
+				"Should not be able to change status to 'Fulfilled'");
 
-            store.Remove(orderId);
+			store.Remove(orderId);
 
-		    orderProcessStream.Remove();
-            store.SaveEventStream(orderProcessStream);
-            
-            orderStream = store.Get(orderId);
-            orderProcessStream = store.Get(orderProcessId);
+			orderProcessStream.Remove();
+			store.SaveEventStream(orderProcessStream);
 
-            Assert.IsTrue(orderStream.IsEmpty);
-            Assert.IsTrue(orderProcessStream.IsEmpty);
+			orderStream = store.Get(orderId);
+			orderProcessStream = store.Get(orderProcessId);
+
+			Assert.IsTrue(orderStream.IsEmpty);
+			Assert.IsTrue(orderProcessStream.IsEmpty);
 		}
-        
-        public void ExerciseEventStoreCanSnapshot(IEventStore store)
+
+		public void ExerciseEventStoreCanSnapshot(IEventStore store)
 		{
 			var orderId = Guid.NewGuid();
 			var orderProcessId = Guid.NewGuid();
@@ -88,13 +91,14 @@ namespace Shuttle.Recall.Tests
 			var orderStream = new EventStream(orderId);
 			var orderProcessStream = new EventStream(orderProcessId);
 
-            orderStream.Apply(order);
+			orderStream.Apply(order);
 
 			orderStream.AddEvent(order.AddItem("t-shirt", 5, 125));
 			orderStream.AddEvent(order.AddItem("baked beans", 2, 4.55));
 			orderStream.AddEvent(order.AddItem("20L white glossy enamel paint", 1, 700));
 
-			Assert.IsTrue(orderStream.AttemptSnapshot(3), "Should be able to call orderStream.AttemptSnapshot(3) and have 'true' returned.");
+			Assert.IsTrue(orderStream.AttemptSnapshot(3),
+				"Should be able to call orderStream.AttemptSnapshot(3) and have 'true' returned.");
 
 			var orderTotal = order.Total();
 
@@ -107,13 +111,15 @@ namespace Shuttle.Recall.Tests
 			orderStream = store.Get(orderId);
 			orderStream.Apply(order);
 
-			Assert.AreEqual(orderTotal, order.Total(), "The total of the first re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
+			Assert.AreEqual(orderTotal, order.Total(),
+				"The total of the first re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
 
 			orderProcess = new OrderProcess(orderProcessId);
 			orderProcessStream = store.Get(orderProcessId);
 			orderProcessStream.Apply(orderProcess);
 
-			Assert.IsTrue(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled), "Should be able to change status to 'Fulfilled'");
+			Assert.IsTrue(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled),
+				"Should be able to change status to 'Fulfilled'");
 
 			orderStream.AddEvent(order.AddItem("4kg bag of potatoes", 5, 15.35));
 
@@ -129,24 +135,26 @@ namespace Shuttle.Recall.Tests
 			orderStream = store.Get(orderId);
 			orderStream.Apply(order);
 
-			Assert.AreEqual(orderTotal, order.Total(), "The total of the second re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
+			Assert.AreEqual(orderTotal, order.Total(),
+				"The total of the second re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
 
 			orderProcess = new OrderProcess(orderProcessId);
 			orderProcessStream = store.Get(orderProcessId);
 			orderProcessStream.Apply(orderProcess);
 
-            Assert.IsFalse(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled), "Should not be able to change status to 'Fulfilled'");
+			Assert.IsFalse(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled),
+				"Should not be able to change status to 'Fulfilled'");
 
-            store.Remove(orderId);
+			store.Remove(orderId);
 
-		    orderProcessStream.Remove();
-            store.SaveEventStream(orderProcessStream);
-            
-            orderStream = store.Get(orderId);
-            orderProcessStream = store.Get(orderProcessId);
+			orderProcessStream.Remove();
+			store.SaveEventStream(orderProcessStream);
 
-            Assert.IsTrue(orderStream.IsEmpty);
-            Assert.IsTrue(orderProcessStream.IsEmpty);
+			orderStream = store.Get(orderId);
+			orderProcessStream = store.Get(orderProcessId);
+
+			Assert.IsTrue(orderStream.IsEmpty);
+			Assert.IsTrue(orderProcessStream.IsEmpty);
 		}
 	}
 }

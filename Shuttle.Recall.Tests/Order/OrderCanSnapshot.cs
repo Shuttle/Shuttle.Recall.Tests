@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Shuttle.Core.Infrastructure;
-using Shuttle.Recall.Core;
 
 namespace Shuttle.Recall.Tests
 {
@@ -63,9 +62,9 @@ namespace Shuttle.Recall.Tests
 			return _items.Sum(item => item.Total());
 		}
 
-	    public object GetSnapshotEvent()
-	    {
-	        return Snapshot();
-	    }
+		public object GetSnapshotEvent()
+		{
+			return Snapshot();
+		}
 	}
 }
