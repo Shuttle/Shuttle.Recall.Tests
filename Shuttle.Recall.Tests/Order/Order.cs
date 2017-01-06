@@ -5,7 +5,7 @@ using Shuttle.Core.Infrastructure;
 
 namespace Shuttle.Recall.Tests
 {
-	public class Order
+	public class Order : ICanSnapshot
 	{
 		public Guid Id { get; private set; }
 
@@ -49,17 +49,17 @@ namespace Shuttle.Recall.Tests
 			_items = new List<OrderItem>(snapshot.Items);
 		}
 
-		public OrderSnapshot Snapshot()
-		{
-			return new OrderSnapshot
-			{
-				Items = new List<OrderItem>(_items)
-			};
-		}
-
 		public double Total()
 		{
 			return _items.Sum(item => item.Total());
 		}
-	}
+
+	    public object GetSnapshotEvent()
+	    {
+            return new OrderSnapshot
+            {
+                Items = new List<OrderItem>(_items)
+            };
+        }
+    }
 }
