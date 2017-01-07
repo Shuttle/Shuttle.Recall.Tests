@@ -70,7 +70,7 @@ namespace Shuttle.Recall.Tests
 			Assert.AreEqual(orderTotal, order.Total(),
 				"The total of the first re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
 
-            orderStream.AttemptSnapshot(1);
+            orderStream.AddSnapshot(order.GetSnapshotEvent());
             store.Save(orderStream);
 
             orderProcess = new OrderProcess(orderProcessId);

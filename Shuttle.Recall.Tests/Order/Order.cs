@@ -5,7 +5,7 @@ using Shuttle.Core.Infrastructure;
 
 namespace Shuttle.Recall.Tests
 {
-	public class Order : ICanSnapshot
+	public class Order 
 	{
 		public Guid Id { get; private set; }
 
