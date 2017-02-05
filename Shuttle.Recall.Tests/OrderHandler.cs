@@ -29,9 +29,9 @@ namespace Shuttle.Recall.Tests
             _count++;
         }
 
-        public void Start()
+        public void Start(int handlerTimeoutSeconds)
         {
-            _timeOutDate = DateTime.Now.AddSeconds(60);
+            _timeOutDate = DateTime.Now.AddSeconds(handlerTimeoutSeconds < 5 ? 5 : handlerTimeoutSeconds);
         }
     }
 }

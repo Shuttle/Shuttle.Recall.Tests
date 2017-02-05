@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.Threading;
+using Autofac;
 using NUnit.Framework;
+using Shuttle.Core.Autofac;
 using Shuttle.Core.Infrastructure;
 
 namespace Shuttle.Recall.Tests
@@ -47,7 +49,7 @@ namespace Shuttle.Recall.Tests
             Assert.IsNull(idGet, string.Format("Should be able to remove association using key (was not removed) / id = {0} / key = '{1}'", id, value));
         }
 
-        public static void ExerciseEventStore(IEventStore store, IEventProcessor processor)
+        public static void ExerciseEventStore(IEventStore store, IEventProcessor processor, int handlerTimeoutSeconds = 5)
         {
             Guard.AgainstNull(store, "store");
             Guard.AgainstNull(processor, "processor");
@@ -118,7 +120,7 @@ namespace Shuttle.Recall.Tests
 
             processor.AddProjection(projection);
 
-            handler.Start();
+            handler.Start(handlerTimeoutSeconds);
 
             processor.Start();
 
@@ -137,6 +139,23 @@ namespace Shuttle.Recall.Tests
 
             Assert.IsTrue(orderStream.IsEmpty);
             Assert.IsTrue(orderProcessStream.IsEmpty);
+        }
+
+        [Test]
+        public void Should_be_able_to_exercise_event_store_and_processing()
+        {
+            var containerBuilder = new ContainerBuilder();
+            var registry = new AutofacComponentRegistry(containerBuilder);
+            var configurator = new EventStoreConfigurator(registry);
+
+            registry.Register<IProjectionRepository, MemoryProjectionRepository>();
+            registry.Register<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>();
+
+            configurator.RegisterComponents(new EventStoreConfiguration());
+
+            var resolver = new AutofacComponentResolver(containerBuilder.Build());
+
+            ExerciseEventStore(EventStore.Create(resolver), EventProcessor.Create(resolver), 60);
         }
     }
 }
