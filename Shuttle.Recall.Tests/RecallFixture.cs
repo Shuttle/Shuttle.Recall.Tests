@@ -146,12 +146,11 @@ namespace Shuttle.Recall.Tests
         {
             var containerBuilder = new ContainerBuilder();
             var registry = new AutofacComponentRegistry(containerBuilder);
-            var configurator = new EventStoreConfigurator(registry);
 
             registry.Register<IProjectionRepository, MemoryProjectionRepository>();
             registry.Register<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>();
 
-            configurator.RegisterComponents(new EventStoreConfiguration());
+            EventStore.Register(registry, new EventStoreConfiguration());
 
             var resolver = new AutofacComponentResolver(containerBuilder.Build());
 
