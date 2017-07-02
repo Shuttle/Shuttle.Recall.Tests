@@ -9,15 +9,8 @@ namespace Shuttle.Recall.Tests
         private int _count;
         private DateTime _timeOutDate = DateTime.MaxValue;
 
-        public bool IsComplete
-        {
-            get { return _count == 5; }
-        }
-
-        public bool HasTimedOut
-        {
-            get { return _timeOutDate < DateTime.Now; }
-        }
+        public bool IsComplete => _count == 5;
+        public bool HasTimedOut => _timeOutDate < DateTime.Now;
 
         public void ProcessEvent(IEventHandlerContext<ItemAdded> context)
         {

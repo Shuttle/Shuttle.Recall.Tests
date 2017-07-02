@@ -13,5 +13,8 @@
     <releaseNotes/>
     <copyright>Copyright (c) 2011-{year}, Eben Roux</copyright>
     <tags>shuttle shuttle-recall shuttle-recall-tests event-sourcing</tags>
+    <dependencies>
+      <dependency id="Shuttle.Recall" version="{Shuttle.Recall-version}" />
+    </dependencies>
   </metadata>
 </package>

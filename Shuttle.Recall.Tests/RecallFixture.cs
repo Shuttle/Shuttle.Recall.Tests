@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.Threading;
-using Autofac;
 using NUnit.Framework;
-using Shuttle.Core.Autofac;
 using Shuttle.Core.Infrastructure;
 
 namespace Shuttle.Recall.Tests
@@ -49,7 +47,80 @@ namespace Shuttle.Recall.Tests
             Assert.IsNull(idGet, string.Format("Should be able to remove association using key (was not removed) / id = {0} / key = '{1}'", id, value));
         }
 
-        public static void ExerciseEventStore(IEventStore store, IEventProcessor processor, int handlerTimeoutSeconds = 5)
+        public static void ExerciseStorage(IEventStore store)
+        {
+            Guard.AgainstNull(store, "store");
+
+            var order = new Order(OrderId);
+            var orderProcess = new OrderProcess(OrderProcessId);
+
+            var orderStream = store.CreateEventStream(OrderId);
+            var orderProcessStream = store.CreateEventStream(OrderProcessId);
+
+            orderStream.AddEvent(order.AddItem("t-shirt", 5, 125));
+            orderStream.AddEvent(order.AddItem("baked beans", 2, 4.55));
+            orderStream.AddEvent(order.AddItem("20L white glossy enamel paint", 1, 700));
+
+            var orderTotal = order.Total();
+
+            store.Save(orderStream);
+
+            orderProcessStream.AddEvent(orderProcess.StartPicking());
+            store.Save(orderProcessStream);
+
+            order = new Order(OrderId);
+            orderStream = store.Get(OrderId);
+
+            orderStream.Apply(order);
+
+            Assert.AreEqual(orderTotal, order.Total(),
+                "The total of the first re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
+
+            orderStream.AddSnapshot(order.GetSnapshotEvent());
+            store.Save(orderStream);
+
+            orderProcess = new OrderProcess(OrderProcessId);
+            orderProcessStream = store.Get(OrderProcessId);
+            orderProcessStream.Apply(orderProcess);
+
+            Assert.IsTrue(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled),
+                "Should be able to change status to 'Fulfilled'");
+
+            orderStream.AddEvent(order.AddItem("4kg bag of potatoes", 5, 15.35));
+
+            orderTotal = order.Total();
+
+            store.Save(orderStream);
+
+            orderProcessStream.AddEvent(orderProcess.Fulfill());
+
+            store.Save(orderProcessStream);
+
+            order = new Order(OrderId);
+            orderStream = store.Get(OrderId);
+            orderStream.Apply(order);
+
+            Assert.AreEqual(orderTotal, order.Total(),
+                "The total of the second re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
+
+            orderProcess = new OrderProcess(OrderProcessId);
+            orderProcessStream = store.Get(OrderProcessId);
+            orderProcessStream.Apply(orderProcess);
+
+            Assert.IsFalse(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled),
+                "Should not be able to change status to 'Fulfilled'");
+
+            store.Remove(OrderId);
+            store.Remove(orderProcessStream.Id);
+
+            orderStream = store.Get(OrderId);
+            orderProcessStream = store.Get(OrderProcessId);
+
+            Assert.IsTrue(orderStream.IsEmpty);
+            Assert.IsTrue(orderProcessStream.IsEmpty);
+        }
+
+        public static void ExerciseEventProcessing(IEventStore store, IEventProcessor processor, int handlerTimeoutSeconds = 5)
         {
             Guard.AgainstNull(store, "store");
             Guard.AgainstNull(processor, "processor");
@@ -57,8 +128,8 @@ namespace Shuttle.Recall.Tests
             var order = new Order(OrderId);
             var orderProcess = new OrderProcess(OrderProcessId);
 
-            var orderStream = new EventStream(OrderId);
-            var orderProcessStream = new EventStream(OrderProcessId);
+            var orderStream = store.CreateEventStream(OrderId);
+            var orderProcessStream = store.CreateEventStream(OrderProcessId);
 
             orderStream.AddEvent(order.AddItem("t-shirt", 5, 125));
             orderStream.AddEvent(order.AddItem("baked beans", 2, 4.55));
@@ -139,22 +210,6 @@ namespace Shuttle.Recall.Tests
 
             Assert.IsTrue(orderStream.IsEmpty);
             Assert.IsTrue(orderProcessStream.IsEmpty);
-        }
-
-        [Test]
-        public void Should_be_able_to_exercise_event_store_and_processing()
-        {
-            var containerBuilder = new ContainerBuilder();
-            var registry = new AutofacComponentRegistry(containerBuilder);
-
-            registry.Register<IProjectionRepository, MemoryProjectionRepository>();
-            registry.Register<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>();
-
-            EventStore.Register(registry, new EventStoreConfiguration());
-
-            var resolver = new AutofacComponentResolver(containerBuilder.Build());
-
-            ExerciseEventStore(EventStore.Create(resolver), EventProcessor.Create(resolver), 60);
         }
     }
 }

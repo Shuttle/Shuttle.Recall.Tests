@@ -30,7 +30,7 @@ namespace Shuttle.Recall.Tests
 			return result;
 		}
 
-		public void On(ItemAdded itemAdded)
+		private void On(ItemAdded itemAdded)
 		{
 			Guard.AgainstNull(itemAdded, "itemAdded");
 
@@ -42,7 +42,7 @@ namespace Shuttle.Recall.Tests
 			});
 		}
 
-		public void On(OrderSnapshot snapshot)
+		private void On(OrderSnapshot snapshot)
 		{
 			Guard.AgainstNull(snapshot, "snapshot");
 

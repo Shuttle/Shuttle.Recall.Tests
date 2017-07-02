@@ -1,4 +1,4 @@
-﻿namespace Shuttle.Recall.Tests
+﻿namespace Shuttle.Recall.Tests.Memory.Fakes
 {
     public class MemoryProjectionRepository : IProjectionRepository
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Shuttle.Core.Infrastructure;
 
-namespace Shuttle.Recall.Tests
+namespace Shuttle.Recall.Tests.Memory.Fakes
 {
     public class MemoryPrimitiveEventRepository : IPrimitiveEventRepository
     {

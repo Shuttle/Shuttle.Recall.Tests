@@ -58,7 +58,7 @@ namespace Shuttle.Recall.Tests
 			return result;
 		}
 
-		public void On(StatusChanged statusChanged)
+		private void On(StatusChanged statusChanged)
 		{
 			Guard.AgainstNull(statusChanged, "statusChanged");
 
