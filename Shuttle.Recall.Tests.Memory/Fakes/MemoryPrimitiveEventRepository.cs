@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Shuttle.Core.Infrastructure;
+using Shuttle.Core.Contract;
 
 namespace Shuttle.Recall.Tests.Memory.Fakes
 {
@@ -24,9 +24,9 @@ namespace Shuttle.Recall.Tests.Memory.Fakes
         {
             var all = new List<PrimitiveEvent>();
 
-            foreach (var @events in _repository.Values)
+            foreach (var events in _repository.Values)
             {
-                all.AddRange(@events);
+                all.AddRange(events);
             }
 
             return all.Where(item => item.SequenceNumber > fromSequenceNumber).OrderBy(item => item.SequenceNumber).ToList();
@@ -34,7 +34,7 @@ namespace Shuttle.Recall.Tests.Memory.Fakes
 
         public void Save(PrimitiveEvent primitiveEvent)
         {
-            Guard.AgainstNull(primitiveEvent, "primitiveEvent");
+            Guard.AgainstNull(primitiveEvent, nameof(primitiveEvent));
 
             if (!_repository.ContainsKey(primitiveEvent.Id))
             {

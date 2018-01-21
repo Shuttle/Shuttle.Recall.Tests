@@ -1,7 +1,7 @@
 ﻿using Castle.Windsor;
 using NUnit.Framework;
 using Shuttle.Core.Castle;
-using Shuttle.Core.Infrastructure;
+using Shuttle.Core.Container;
 using Shuttle.Recall.Tests.Memory.Fakes;
 
 namespace Shuttle.Recall.Tests.Memory

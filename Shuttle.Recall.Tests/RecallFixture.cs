@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Data.SqlClient;
 using System.Threading;
 using NUnit.Framework;
-using Shuttle.Core.Infrastructure;
+using Shuttle.Core.Contract;
 
 namespace Shuttle.Recall.Tests
 {
@@ -13,7 +12,7 @@ namespace Shuttle.Recall.Tests
 
         public static void ExcerciseKeyStore(IKeyStore store)
         {
-            Guard.AgainstNull(store, "store");
+            Guard.AgainstNull(store, nameof(store));
 
             var id = OrderId;
 
@@ -22,34 +21,39 @@ namespace Shuttle.Recall.Tests
 
             store.Add(id, value);
 
-            Assert.Throws<SqlException>(() => store.Add(id, value), string.Format("Should not be able to add duplicate key / id = {0} / key = '{1}'", id, value));
+            Assert.Throws<Exception>(() => store.Add(id, value),
+                $"Should not be able to add duplicate key / id = {id} / key = '{value}'");
 
             var idGet = store.Get(value);
 
-            Assert.IsNotNull(idGet, string.Format("Should be able to retrieve the id of the associated key / id = {0} / key = '{1}'", id, value));
-            Assert.AreEqual(id, idGet, string.Format("Should be able to retrieve the correct id of the associated key / id = {0} / key = '{1}' / id retrieved = {2}", id, value, idGet));
+            Assert.IsNotNull(idGet,
+                $"Should be able to retrieve the id of the associated key / id = {id} / key = '{value}'");
+            Assert.AreEqual(id, idGet,
+                $"Should be able to retrieve the correct id of the associated key / id = {id} / key = '{value}' / id retrieved = {idGet}");
 
             idGet = store.Get(anotherValue);
 
-            Assert.IsNull(idGet, string.Format("Should not be able to get id of non-existent / id = {0} / key = '{1}'", id, anotherValue));
+            Assert.IsNull(idGet, $"Should not be able to get id of non-existent / id = {id} / key = '{anotherValue}'");
 
             store.Remove(id);
 
             idGet = store.Get(value);
 
-            Assert.IsNull(idGet, string.Format("Should be able to remove association using id (was not removed) / id = {0} / key = '{1}'", id, value));
+            Assert.IsNull(idGet,
+                $"Should be able to remove association using id (was not removed) / id = {id} / key = '{value}'");
 
             store.Add(id, value);
             store.Remove(value);
 
             idGet = store.Get(value);
 
-            Assert.IsNull(idGet, string.Format("Should be able to remove association using key (was not removed) / id = {0} / key = '{1}'", id, value));
+            Assert.IsNull(idGet,
+                $"Should be able to remove association using key (was not removed) / id = {id} / key = '{value}'");
         }
 
         public static void ExerciseStorage(IEventStore store)
         {
-            Guard.AgainstNull(store, "store");
+            Guard.AgainstNull(store, nameof(store));
 
             var order = new Order(OrderId);
             var orderProcess = new OrderProcess(OrderProcessId);
@@ -122,8 +126,8 @@ namespace Shuttle.Recall.Tests
 
         public static void ExerciseEventProcessing(IEventStore store, IEventProcessor processor, int handlerTimeoutSeconds = 5)
         {
-            Guard.AgainstNull(store, "store");
-            Guard.AgainstNull(processor, "processor");
+            Guard.AgainstNull(store, nameof(store));
+            Guard.AgainstNull(processor, nameof(processor));
 
             var order = new Order(OrderId);
             var orderProcess = new OrderProcess(OrderProcessId);

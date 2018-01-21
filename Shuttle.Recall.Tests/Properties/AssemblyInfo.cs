@@ -1,30 +1,38 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-#if NET45FULL
-[assembly: AssemblyTitle("Shuttle.Recall.Tests for .NET Framework 4.5")]
+#if NET46
+[assembly: AssemblyTitle(".NET Framework 4.6")]
 #endif
 
-#if NET451FULL
-[assembly: AssemblyTitle("Shuttle.Recall.Tests for .NET Framework 4.5.1")]
+#if NET461
+[assembly: AssemblyTitle(".NET Framework 4.6.1")]
 #endif
 
-#if NET452FULL
-[assembly: AssemblyTitle("Shuttle.Recall.Tests for .NET Framework 4.5.2")]
+#if NET462
+[assembly: AssemblyTitle(".NET Framework 4.6.2")]
 #endif
 
-#if NET46FULL
-[assembly: AssemblyTitle("Shuttle.Recall.Tests for .NET Framework 4.6")]
+#if NET47
+[assembly: AssemblyTitle(".NET Framework 4.7")]
 #endif
 
-#if NET461FULL
-[assembly: AssemblyTitle("Shuttle.Recall.Tests for .NET Framework 4.6.1")]
+#if NET471
+[assembly: AssemblyTitle(".NET Framework 4.7.1")]
 #endif
 
-[assembly: AssemblyVersion("8.2.2.0")]
-[assembly: AssemblyCopyright("Copyright © Eben Roux 2010-2015")]
-[assembly: AssemblyProduct("Shuttle.Recall")]
+#if NETCOREAPP2_0
+[assembly: AssemblyTitle(".NET Core 2.0")]
+#endif
+
+#if NETSTANDARD2_0
+[assembly: AssemblyTitle(".NET Standard 2.0")]
+#endif
+
+[assembly: AssemblyVersion("10.0.0.0")]
+[assembly: AssemblyCopyright("Copyright © Eben Roux 2018")]
+[assembly: AssemblyProduct("Shuttle.Recall.Tests")]
 [assembly: AssemblyCompany("Shuttle")]
 [assembly: AssemblyConfiguration("Release")]
-[assembly: AssemblyInformationalVersion("8.2.2")]
+[assembly: AssemblyInformationalVersion("10.0.0")]
 [assembly: ComVisible(false)]
