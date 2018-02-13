@@ -21,8 +21,8 @@ namespace Shuttle.Recall.Tests
 
             store.Add(id, value);
 
-            Assert.Throws<Exception>(() => store.Add(id, value),
-                $"Should not be able to add duplicate key / id = {id} / key = '{value}'");
+            Assert.Throws<DuplicateKeyException>(() => store.Add(id, value),
+                $"Should not be able to add duplicate key / id = {id} / key = '{value}' / (ensure that your implementation throws a `DuplicateKeyException`)");
 
             var idGet = store.Get(value);
 
