@@ -10,47 +10,6 @@ namespace Shuttle.Recall.Tests
         public static readonly Guid OrderId = new Guid("047FF6FB-FB57-4F63-8795-99F252EDA62F");
         public static readonly Guid OrderProcessId = new Guid("74937207-F430-4746-9F31-4E76EF2FA7E6");
 
-        public static void ExcerciseKeyStore(IKeyStore store)
-        {
-            Guard.AgainstNull(store, nameof(store));
-
-            var id = OrderId;
-
-            var value = string.Concat("value=", id.ToString());
-            var anotherValue = string.Concat("anotherValue=", id.ToString());
-
-            store.Add(id, value);
-
-            Assert.Throws<DuplicateKeyException>(() => store.Add(id, value),
-                $"Should not be able to add duplicate key / id = {id} / key = '{value}' / (ensure that your implementation throws a `DuplicateKeyException`)");
-
-            var idGet = store.Get(value);
-
-            Assert.IsNotNull(idGet,
-                $"Should be able to retrieve the id of the associated key / id = {id} / key = '{value}'");
-            Assert.AreEqual(id, idGet,
-                $"Should be able to retrieve the correct id of the associated key / id = {id} / key = '{value}' / id retrieved = {idGet}");
-
-            idGet = store.Get(anotherValue);
-
-            Assert.IsNull(idGet, $"Should not be able to get id of non-existent / id = {id} / key = '{anotherValue}'");
-
-            store.Remove(id);
-
-            idGet = store.Get(value);
-
-            Assert.IsNull(idGet,
-                $"Should be able to remove association using id (was not removed) / id = {id} / key = '{value}'");
-
-            store.Add(id, value);
-            store.Remove(value);
-
-            idGet = store.Get(value);
-
-            Assert.IsNull(idGet,
-                $"Should be able to remove association using key (was not removed) / id = {id} / key = '{value}'");
-        }
-
         public static void ExerciseStorage(IEventStore store)
         {
             Guard.AgainstNull(store, nameof(store));
