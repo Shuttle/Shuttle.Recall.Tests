@@ -147,7 +147,7 @@ namespace Shuttle.Recall.Tests
             Assert.IsFalse(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled),
                 "Should not be able to change status to 'Fulfilled'");
 
-            var projection = new Projection("recall-fixture", 0);
+            var projection = new Projection(Environment.MachineName, AppDomain.CurrentDomain.BaseDirectory, "recall-fixture", 0);
             var handler = new OrderHandler();
 
             projection.AddEventHandler(handler);
