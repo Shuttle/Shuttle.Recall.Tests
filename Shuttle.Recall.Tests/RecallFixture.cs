@@ -64,7 +64,8 @@ namespace Shuttle.Recall.Tests
             orderStream.Apply(order);
 
             Assert.AreEqual(orderTotal, order.Total(),
-                "The total of the second re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
+                "The total of the second re-constituted order does not equal the expected amount of '{0}'.",
+                orderTotal);
 
             orderProcess = new OrderProcess(OrderProcessId);
             orderProcessStream = store.Get(OrderProcessId);
@@ -72,87 +73,17 @@ namespace Shuttle.Recall.Tests
 
             Assert.IsFalse(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled),
                 "Should not be able to change status to 'Fulfilled'");
-
-            store.Remove(OrderId);
-            store.Remove(orderProcessStream.Id);
-
-            orderStream = store.Get(OrderId);
-            orderProcessStream = store.Get(OrderProcessId);
-
-            Assert.IsTrue(orderStream.IsEmpty);
-            Assert.IsTrue(orderProcessStream.IsEmpty);
         }
 
-        public static void ExerciseEventProcessing(IEventStore store, IEventProcessor processor, int handlerTimeoutSeconds = 5)
+        public static void ExerciseEventProcessing(IEventProcessor processor, int handlerTimeoutSeconds = 5)
         {
-            Guard.AgainstNull(store, nameof(store));
             Guard.AgainstNull(processor, nameof(processor));
 
-            var order = new Order(OrderId);
-            var orderProcess = new OrderProcess(OrderProcessId);
-
-            var orderStream = store.CreateEventStream(OrderId);
-            var orderProcessStream = store.CreateEventStream(OrderProcessId);
-
-            orderStream.AddEvent(order.AddItem("t-shirt", 5, 125));
-            orderStream.AddEvent(order.AddItem("baked beans", 2, 4.55));
-            orderStream.AddEvent(order.AddItem("20L white glossy enamel paint", 1, 700));
-
-            var orderTotal = order.Total();
-
-            store.Save(orderStream);
-
-            orderProcessStream.AddEvent(orderProcess.StartPicking());
-            store.Save(orderProcessStream);
-
-            order = new Order(OrderId);
-            orderStream = store.Get(OrderId);
-
-            orderStream.Apply(order);
-
-            Assert.AreEqual(orderTotal, order.Total(),
-                "The total of the first re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
-
-            orderStream.AddSnapshot(order.GetSnapshotEvent());
-            store.Save(orderStream);
-
-            orderProcess = new OrderProcess(OrderProcessId);
-            orderProcessStream = store.Get(OrderProcessId);
-            orderProcessStream.Apply(orderProcess);
-
-            Assert.IsTrue(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled),
-                "Should be able to change status to 'Fulfilled'");
-
-            orderStream.AddEvent(order.AddItem("4kg bag of potatoes", 5, 15.35));
-
-            orderTotal = order.Total();
-
-            store.Save(orderStream);
-
-            orderProcessStream.AddEvent(orderProcess.Fulfill());
-
-            store.Save(orderProcessStream);
-
-            order = new Order(OrderId);
-            orderStream = store.Get(OrderId);
-            orderStream.Apply(order);
-
-            Assert.AreEqual(orderTotal, order.Total(),
-                "The total of the second re-constituted order does not equal the expected amount of '{0}'.", orderTotal);
-
-            orderProcess = new OrderProcess(OrderProcessId);
-            orderProcessStream = store.Get(OrderProcessId);
-            orderProcessStream.Apply(orderProcess);
-
-            Assert.IsFalse(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled),
-                "Should not be able to change status to 'Fulfilled'");
-
-            var projection = new Projection("recall-fixture", 0, Environment.MachineName, AppDomain.CurrentDomain.BaseDirectory);
             var handler = new OrderHandler();
 
-            projection.AddEventHandler(handler);
+            var projection = processor.AddProjection("recall-fixture");
 
-            processor.AddProjection(projection);
+            projection.AddEventHandler(handler);
 
             handler.Start(handlerTimeoutSeconds);
 
@@ -163,13 +94,21 @@ namespace Shuttle.Recall.Tests
                 Thread.Sleep(250);
             }
 
-            Assert.IsFalse(handler.HasTimedOut, "The handler has timed out.  Not all of the events have been processed by the projection.");
+            processor.Stop();
+
+            Assert.IsFalse(handler.HasTimedOut,
+                "The handler has timed out.  Not all of the events have been processed by the projection.");
+        }
+
+        public static void ExerciseStorageRemoval(IEventStore store)
+        {
+            Guard.AgainstNull(store, nameof(store));
 
             store.Remove(OrderId);
-            store.Remove(orderProcessStream.Id);
+            store.Remove(OrderProcessId);
 
-            orderStream = store.Get(OrderId);
-            orderProcessStream = store.Get(OrderProcessId);
+            var orderStream = store.Get(OrderId);
+            var orderProcessStream = store.Get(OrderProcessId);
 
             Assert.IsTrue(orderStream.IsEmpty);
             Assert.IsTrue(orderProcessStream.IsEmpty);

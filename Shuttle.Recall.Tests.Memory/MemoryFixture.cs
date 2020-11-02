@@ -18,7 +18,11 @@ namespace Shuttle.Recall.Tests.Memory
 
             EventStore.Register(container, new EventStoreConfiguration());
 
-            RecallFixture.ExerciseEventProcessing(EventStore.Create(container), EventProcessor.Create(container), 60);
+            var eventStore = EventStore.Create(container);
+
+            RecallFixture.ExerciseStorage(eventStore);
+            RecallFixture.ExerciseEventProcessing(EventProcessor.Create(container), 60);
+            RecallFixture.ExerciseStorageRemoval(eventStore);
         }
     }
 }
