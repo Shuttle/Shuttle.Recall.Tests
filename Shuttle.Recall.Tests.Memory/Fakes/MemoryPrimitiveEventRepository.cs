@@ -20,7 +20,7 @@ namespace Shuttle.Recall.Tests.Memory.Fakes
             return _repository.ContainsKey(id) ? _repository[id] : new List<PrimitiveEvent>();
         }
 
-        public IEnumerable<PrimitiveEvent> Get(long fromSequenceNumber, long toSequenceNumber, IEnumerable<Type> eventTypes)
+        public IEnumerable<PrimitiveEvent> Fetch(long fromSequenceNumber, int fetchCount, IEnumerable<Type> eventTypes)
         {
             var all = new List<PrimitiveEvent>();
 
@@ -28,6 +28,8 @@ namespace Shuttle.Recall.Tests.Memory.Fakes
             {
                 all.AddRange(events);
             }
+
+            var toSequenceNumber = fromSequenceNumber + fetchCount;
 
             return all.Where(item => item.SequenceNumber >= fromSequenceNumber && item.SequenceNumber <= toSequenceNumber).OrderBy(item => item.SequenceNumber).ToList();
         }
@@ -42,6 +44,7 @@ namespace Shuttle.Recall.Tests.Memory.Fakes
             }
 
             primitiveEvent.SequenceNumber = _sequenceNumber++;
+
             _repository[primitiveEvent.Id].Add(primitiveEvent);
         }
     }
