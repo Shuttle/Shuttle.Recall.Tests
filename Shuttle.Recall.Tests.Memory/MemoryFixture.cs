@@ -15,13 +15,12 @@ namespace Shuttle.Recall.Tests.Memory
 
             container.Register<IProjectionRepository, MemoryProjectionRepository>();
             container.Register<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>();
+            container.RegisterEventStore();
 
-            EventStore.Register(container, new EventStoreConfiguration());
-
-            var eventStore = EventStore.Create(container);
+            var eventStore = container.Resolve<IEventStore>();
 
             RecallFixture.ExerciseStorage(eventStore);
-            RecallFixture.ExerciseEventProcessing(EventProcessor.Create(container), 60);
+            RecallFixture.ExerciseEventProcessing(container.Resolve<IEventProcessor>(), 60);
             RecallFixture.ExerciseStorageRemoval(eventStore);
         }
     }
