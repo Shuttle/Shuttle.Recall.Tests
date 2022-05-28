@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="NUnit" Version="3.13.3" />
-    <PackageReference Include="Shuttle.Recall" Version="13.0.1" />
+    <PackageReference Include="Shuttle.Recall" Version="14.0.0" />
   </ItemGroup>
 
 </Project>
