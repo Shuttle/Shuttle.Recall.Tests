@@ -34,7 +34,7 @@ namespace Shuttle.Recall.Tests.Memory.Fakes
             return all.Where(item => item.SequenceNumber >= fromSequenceNumber && item.SequenceNumber <= toSequenceNumber).OrderBy(item => item.SequenceNumber).ToList();
         }
 
-        public void Save(PrimitiveEvent primitiveEvent)
+        public long Save(PrimitiveEvent primitiveEvent)
         {
             Guard.AgainstNull(primitiveEvent, nameof(primitiveEvent));
 
@@ -46,6 +46,13 @@ namespace Shuttle.Recall.Tests.Memory.Fakes
             primitiveEvent.SequenceNumber = _sequenceNumber++;
 
             _repository[primitiveEvent.Id].Add(primitiveEvent);
+
+            return _sequenceNumber;
+        }
+
+        public long GetSequenceNumber(Guid id)
+        {
+            return _sequenceNumber;
         }
     }
 }

@@ -1,7 +1,5 @@
-﻿using Castle.Windsor;
+﻿using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
-using Shuttle.Core.Castle;
-using Shuttle.Core.Container;
 using Shuttle.Recall.Tests.Memory.Fakes;
 
 namespace Shuttle.Recall.Tests.Memory
@@ -11,16 +9,18 @@ namespace Shuttle.Recall.Tests.Memory
         [Test]
         public void Should_be_able_to_exercise_event_store_and_processing()
         {
-            var container = new WindsorComponentContainer(new WindsorContainer());
+            var services = new ServiceCollection();
 
-            container.Register<IProjectionRepository, MemoryProjectionRepository>();
-            container.Register<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>();
-            container.RegisterEventStore();
+            services.AddSingleton<IProjectionRepository, MemoryProjectionRepository>();
+            services.AddSingleton<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>();
+            services.AddEventStore();
 
-            var eventStore = container.Resolve<IEventStore>();
+            var serviceProvider = services.BuildServiceProvider();
+
+            var eventStore = serviceProvider.GetRequiredService<IEventStore>();
 
             RecallFixture.ExerciseStorage(eventStore);
-            RecallFixture.ExerciseEventProcessing(container.Resolve<IEventProcessor>(), 60);
+            RecallFixture.ExerciseEventProcessing(serviceProvider.GetRequiredService<IEventProcessor>(), 60);
             RecallFixture.ExerciseStorageRemoval(eventStore);
         }
     }
