@@ -3,7 +3,7 @@
 <package>
 	<metadata>
 		<id>Shuttle.Recall.Tests</id>
-		<version>16.0.0</version>
+		<version>16.0.1</version>
 		<authors>Eben Roux</authors>
 		<owners>Eben Roux</owners>
 		<license type="expression">BSD-3-Clause</license>
@@ -16,7 +16,7 @@
 		<tags>eventsourcing eventsource event-sourcing event-source eventstore event-store</tags>
 		<dependencies>
       <dependency id="NUnit" version="3.13.3" />
-      <dependency id="Shuttle.Recall" version="16.0.0" />
+      <dependency id="Shuttle.Recall" version="16.0.1" />
 		</dependencies>
 	</metadata>
 	<files>

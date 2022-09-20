@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Shuttle.Recall.Tests.Memory.Fakes;
 
@@ -11,8 +13,11 @@ namespace Shuttle.Recall.Tests.Memory
         {
             var services = new ServiceCollection();
 
+            Dictionary<Guid, List<PrimitiveEvent>> store = new Dictionary<Guid, List<PrimitiveEvent>>();
+
             services.AddSingleton<IProjectionRepository, MemoryProjectionRepository>();
-            services.AddSingleton<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>();
+            services.AddSingleton<IPrimitiveEventRepository>(new MemoryPrimitiveEventRepository(store));
+            services.AddSingleton<IPrimitiveEventQuery>(new MemoryPrimitiveEventQuery(store));
             services.AddEventStore();
 
             var serviceProvider = services.BuildServiceProvider();
