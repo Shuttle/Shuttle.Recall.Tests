@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2020
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shuttle.Recall.Tests", "Shuttle.Recall.Tests\Shuttle.Recall.Tests.csproj", "{A25EE344-8DF7-4579-810D-6437E0766DEA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shuttle.Recall.Tests", "Shuttle.Recall.Tests\Shuttle.Recall.Tests.csproj", "{A25EE344-8DF7-4579-810D-6437E0766DEA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8333FF77-B982-42C6-A3B6-BF2E7A67E06C}"
 	ProjectSection(SolutionItems) = preProject
@@ -11,7 +11,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shuttle.Recall.Tests.Memory", "Shuttle.Recall.Tests.Memory\Shuttle.Recall.Tests.Memory.csproj", "{4E9D7FE1-6D71-4937-9C24-A0384FDCB07C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shuttle.Recall.Tests.Memory", "Shuttle.Recall.Tests.Memory\Shuttle.Recall.Tests.Memory.csproj", "{4E9D7FE1-6D71-4937-9C24-A0384FDCB07C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
