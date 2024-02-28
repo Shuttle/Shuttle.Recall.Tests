@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Shuttle.Core.Contract;
 
 namespace Shuttle.Recall.Tests.Memory.Fakes
@@ -50,6 +51,11 @@ namespace Shuttle.Recall.Tests.Memory.Fakes
             }
 
             return queryable.ToList();
+        }
+
+        public async Task<IEnumerable<PrimitiveEvent>> SearchAsync(PrimitiveEvent.Specification specification)
+        {
+            return await Task.FromResult(Search(specification));
         }
     }
 }

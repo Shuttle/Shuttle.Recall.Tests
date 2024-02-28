@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Shuttle.Core.Contract;
 
 namespace Shuttle.Recall.Tests.Memory.Fakes
@@ -45,6 +46,28 @@ namespace Shuttle.Recall.Tests.Memory.Fakes
         public long GetSequenceNumber(Guid id)
         {
             return _sequenceNumber;
+        }
+
+        public async Task RemoveAsync(Guid id)
+        {
+            Remove(id);
+
+            await Task.CompletedTask;
+        }
+
+        public async Task<IEnumerable<PrimitiveEvent>> GetAsync(Guid id)
+        {
+            return await Task.FromResult(Get(id));
+        }
+
+        public async ValueTask<long> SaveAsync(PrimitiveEvent primitiveEvent)
+        {
+            return await new ValueTask<long>(Save(primitiveEvent));
+        }
+
+        public async ValueTask<long> GetSequenceNumberAsync(Guid id)
+        {
+            return await new ValueTask<long>(GetSequenceNumber(id));
         }
     }
 }
