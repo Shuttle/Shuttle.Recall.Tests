@@ -17,6 +17,7 @@
 		<dependencies>
       <dependency id="NUnit" version="3.14.0" />
       <dependency id="Shuttle.Recall" version="17.0.0" />
+      <dependency id="Shuttle.Recall.Logging" version="17.0.0" />
 		</dependencies>
 	</metadata>
 	<files>
