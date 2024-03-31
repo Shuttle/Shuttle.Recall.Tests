@@ -12,25 +12,34 @@ namespace Shuttle.Recall.Tests
         public static readonly Guid OrderId = new Guid("047FF6FB-FB57-4F63-8795-99F252EDA62F");
         public static readonly Guid OrderProcessId = new Guid("74937207-F430-4746-9F31-4E76EF2FA7E6");
 
-        public void ExerciseEventProcessing(IServiceCollection services, int handlerTimeoutSeconds = 5)
+        public void ExerciseEventProcessing(IServiceCollection services, Action<IServiceProvider> serviceProviderCallback = null, int handlerTimeoutSeconds = 5)
         {
-            ExerciseEventProcessingAsync(services, handlerTimeoutSeconds, true).GetAwaiter().GetResult();
+            ExerciseEventProcessingAsync(services, serviceProviderCallback, handlerTimeoutSeconds, true).GetAwaiter().GetResult();
         }
 
-        public async Task ExerciseEventProcessingAsync(IServiceCollection services, int handlerTimeoutSeconds = 5)
+        public async Task ExerciseEventProcessingAsync(IServiceCollection services, Action<IServiceProvider> serviceProviderCallback = null, int handlerTimeoutSeconds = 5)
         {
-            await ExerciseEventProcessingAsync(services, handlerTimeoutSeconds, false).ConfigureAwait(false);
+            await ExerciseEventProcessingAsync(services, serviceProviderCallback, handlerTimeoutSeconds, false).ConfigureAwait(false);
         }
 
-        private async Task ExerciseEventProcessingAsync(IServiceCollection services, int handlerTimeoutSeconds, bool sync)
+        private async Task ExerciseEventProcessingAsync(IServiceCollection services, Action<IServiceProvider> serviceProviderCallback, int handlerTimeoutSeconds, bool sync)
         {
             Guard.AgainstNull(services, nameof(services));
 
             services.ConfigureLogging(nameof(ExerciseEventProcessingAsync));
 
-            var serviceProvider = sync
-                ? services.BuildServiceProvider().StartHostedServices()
-                : await services.BuildServiceProvider().StartHostedServicesAsync().ConfigureAwait(false);
+            var serviceProvider = services.BuildServiceProvider();
+
+            serviceProviderCallback?.Invoke(serviceProvider);
+
+            if (sync)
+            {
+                serviceProvider.StartHostedServices();
+            }
+            else
+            {
+                await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
+            }
 
             var processor = serviceProvider.GetRequiredService<IEventProcessor>();
 
@@ -75,25 +84,34 @@ namespace Shuttle.Recall.Tests
             Assert.IsFalse(handler.HasTimedOut, "The handler has timed out.  Not all of the events have been processed by the projection.");
         }
 
-        public void ExerciseStorage(IServiceCollection services)
+        public void ExerciseStorage(IServiceCollection services, Action<IServiceProvider> serviceProviderCallback = null)
         {
-            ExerciseStorageAsync(services, true).GetAwaiter().GetResult();
+            ExerciseStorageAsync(services, serviceProviderCallback, true).GetAwaiter().GetResult();
         }
 
-        public async Task ExerciseStorageAsync(IServiceCollection services)
+        public async Task ExerciseStorageAsync(IServiceCollection services, Action<IServiceProvider> serviceProviderCallback = null)
         {
-            await ExerciseStorageAsync(services, false).ConfigureAwait(false);
+            await ExerciseStorageAsync(services, serviceProviderCallback, false).ConfigureAwait(false);
         }
 
-        private async Task ExerciseStorageAsync(IServiceCollection services, bool sync)
+        private async Task ExerciseStorageAsync(IServiceCollection services, Action<IServiceProvider> serviceProviderCallback, bool sync)
         {
             Guard.AgainstNull(services, nameof(services));
 
             services.ConfigureLogging(nameof(ExerciseStorageAsync));
 
-            var serviceProvider = sync
-                ? services.BuildServiceProvider().StartHostedServices()
-                : await services.BuildServiceProvider().StartHostedServicesAsync().ConfigureAwait(false);
+            var serviceProvider = services.BuildServiceProvider();
+
+            serviceProviderCallback?.Invoke(serviceProvider);
+
+            if(sync)
+            {
+                serviceProvider.StartHostedServices();
+            }
+            else
+            {
+                await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
+            }
 
             var eventStore = serviceProvider.GetRequiredService<IEventStore>();
 
@@ -190,25 +208,34 @@ namespace Shuttle.Recall.Tests
             Assert.IsFalse(orderProcess.CanChangeStatusTo(OrderProcessStatus.Fulfilled), "Should not be able to change status to 'Fulfilled'");
         }
 
-        public void ExerciseStorageRemoval(IServiceCollection services)
+        public void ExerciseStorageRemoval(IServiceCollection services, Action<IServiceProvider> serviceProviderCallback = null)
         {
-            ExerciseStorageRemovalAsync(services, true).GetAwaiter().GetResult();
+            ExerciseStorageRemovalAsync(services, serviceProviderCallback, true).GetAwaiter().GetResult();
         }
 
-        public async Task ExerciseStorageRemovalAsync(IServiceCollection services)
+        public async Task ExerciseStorageRemovalAsync(IServiceCollection services, Action<IServiceProvider> serviceProviderCallback = null)
         {
-            await ExerciseStorageRemovalAsync(services, false).ConfigureAwait(false);
+            await ExerciseStorageRemovalAsync(services, serviceProviderCallback, false).ConfigureAwait(false);
         }
 
-        private async Task ExerciseStorageRemovalAsync(IServiceCollection services, bool sync)
+        private async Task ExerciseStorageRemovalAsync(IServiceCollection services, Action<IServiceProvider> serviceProviderCallback, bool sync)
         {
             Guard.AgainstNull(services, nameof(services));
 
             services.ConfigureLogging(nameof(ExerciseStorageRemovalAsync));
 
-            var serviceProvider = sync
-                ? services.BuildServiceProvider().StartHostedServices()
-                : await services.BuildServiceProvider().StartHostedServicesAsync().ConfigureAwait(false);
+            var serviceProvider = services.BuildServiceProvider();
+
+            serviceProviderCallback?.Invoke(serviceProvider);
+            
+            if(sync)
+            {
+                serviceProvider.StartHostedServices();
+            }
+            else
+            {
+                await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
+            }
 
             var eventStore = serviceProvider.GetRequiredService<IEventStore>();
 

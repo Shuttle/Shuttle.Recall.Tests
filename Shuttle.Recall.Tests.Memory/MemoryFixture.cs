@@ -35,13 +35,13 @@ public class MemoryFixture : RecallFixture
         if (sync)
         {
             ExerciseStorage(services);
-            ExerciseEventProcessing(services, 60);
+            ExerciseEventProcessing(services, handlerTimeoutSeconds: 60);
             ExerciseStorageRemoval(services);
         }
         else
         {
             await ExerciseStorageAsync(services);
-            await ExerciseEventProcessingAsync(services, 60);
+            await ExerciseEventProcessingAsync(services, handlerTimeoutSeconds: 60);
             await ExerciseStorageRemovalAsync(services);
         }
     }
