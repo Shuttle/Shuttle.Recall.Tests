@@ -1,27 +1,83 @@
-﻿using Castle.Windsor;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
-using Shuttle.Core.Castle;
-using Shuttle.Core.Container;
 using Shuttle.Recall.Tests.Memory.Fakes;
 
-namespace Shuttle.Recall.Tests.Memory
+namespace Shuttle.Recall.Tests.Memory;
+
+public class MemoryFixture : RecallFixture
 {
-    public class MemoryFixture
+    [Test]
+    public void Should_be_able_to_exercise_event_processing()
     {
-        [Test]
-        public void Should_be_able_to_exercise_event_store_and_processing()
+        Should_be_able_to_exercise_event_processing_async(true).GetAwaiter().GetResult();
+    }
+
+    [Test]
+    public async Task Should_be_able_to_exercise_event_processing_async()
+    {
+        await Should_be_able_to_exercise_event_processing_async(false).ConfigureAwait(false);
+    }
+
+    private async Task Should_be_able_to_exercise_event_processing_async(bool sync)
+    {
+        var services = new ServiceCollection();
+
+        var store = new Dictionary<Guid, List<PrimitiveEvent>>();
+
+        services.AddSingleton<IProjectionRepository, MemoryProjectionRepository>();
+        services.AddSingleton<IPrimitiveEventRepository>(new MemoryPrimitiveEventRepository(store));
+        services.AddSingleton<IPrimitiveEventQuery>(new MemoryPrimitiveEventQuery(store));
+        services.AddEventStore(builder => builder.Options.Asynchronous = !sync);
+
+        if (sync)
         {
-            var container = new WindsorComponentContainer(new WindsorContainer());
+            ExerciseStorage(services);
+            ExerciseEventProcessing(services, handlerTimeoutSeconds: 60);
+            ExerciseStorageRemoval(services);
+        }
+        else
+        {
+            await ExerciseStorageAsync(services);
+            await ExerciseEventProcessingAsync(services, handlerTimeoutSeconds: 60);
+            await ExerciseStorageRemovalAsync(services);
+        }
+    }
 
-            container.Register<IProjectionRepository, MemoryProjectionRepository>();
-            container.Register<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>();
-            container.RegisterEventStore();
+    [Test]
+    public void Should_be_able_to_exercise_event_store()
+    {
+        Should_be_able_to_exercise_event_store_async(true).GetAwaiter().GetResult();
+    }
 
-            var eventStore = container.Resolve<IEventStore>();
+    [Test]
+    public async Task Should_be_able_to_exercise_event_store_async()
+    {
+        await Should_be_able_to_exercise_event_store_async(false).ConfigureAwait(false);
+    }
 
-            RecallFixture.ExerciseStorage(eventStore);
-            RecallFixture.ExerciseEventProcessing(container.Resolve<IEventProcessor>(), 60);
-            RecallFixture.ExerciseStorageRemoval(eventStore);
+    private async Task Should_be_able_to_exercise_event_store_async(bool sync)
+    {
+        var services = new ServiceCollection();
+
+        var store = new Dictionary<Guid, List<PrimitiveEvent>>();
+
+        services.AddSingleton<IProjectionRepository, MemoryProjectionRepository>();
+        services.AddSingleton<IPrimitiveEventRepository>(new MemoryPrimitiveEventRepository(store));
+        services.AddSingleton<IPrimitiveEventQuery>(new MemoryPrimitiveEventQuery(store));
+        services.AddEventStore(builder => builder.Options.Asynchronous = !sync);
+
+        if (sync)
+        {
+            ExerciseStorage(services);
+            ExerciseStorageRemoval(services);
+        }
+        else
+        {
+            await ExerciseStorageAsync(services);
+            await ExerciseStorageRemovalAsync(services);
         }
     }
 }

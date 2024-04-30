@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading.Tasks;
 using Shuttle.Core.Contract;
 
 namespace Shuttle.Recall.Tests.Memory.Fakes
@@ -8,44 +8,66 @@ namespace Shuttle.Recall.Tests.Memory.Fakes
     public class MemoryPrimitiveEventRepository : IPrimitiveEventRepository
     {
         private static long _sequenceNumber = 1;
-        private readonly Dictionary<Guid, List<PrimitiveEvent>> _repository = new Dictionary<Guid, List<PrimitiveEvent>>();
+        private readonly Dictionary<Guid, List<PrimitiveEvent>> _store;
+
+        public MemoryPrimitiveEventRepository(Dictionary<Guid, List<PrimitiveEvent>> store)
+        {
+            Guard.AgainstNull(store, nameof(store));
+
+            _store = store;
+        }
 
         public void Remove(Guid id)
         {
-            _repository.Remove(id);
+            _store.Remove(id);
         }
 
         public IEnumerable<PrimitiveEvent> Get(Guid id)
         {
-            return _repository.ContainsKey(id) ? _repository[id] : new List<PrimitiveEvent>();
+            return _store.ContainsKey(id) ? _store[id] : new List<PrimitiveEvent>();
         }
 
-        public IEnumerable<PrimitiveEvent> Fetch(long fromSequenceNumber, int fetchCount, IEnumerable<Type> eventTypes)
-        {
-            var all = new List<PrimitiveEvent>();
-
-            foreach (var events in _repository.Values)
-            {
-                all.AddRange(events);
-            }
-
-            var toSequenceNumber = fromSequenceNumber + fetchCount;
-
-            return all.Where(item => item.SequenceNumber >= fromSequenceNumber && item.SequenceNumber <= toSequenceNumber).OrderBy(item => item.SequenceNumber).ToList();
-        }
-
-        public void Save(PrimitiveEvent primitiveEvent)
+        public long Save(PrimitiveEvent primitiveEvent)
         {
             Guard.AgainstNull(primitiveEvent, nameof(primitiveEvent));
 
-            if (!_repository.ContainsKey(primitiveEvent.Id))
+            if (!_store.ContainsKey(primitiveEvent.Id))
             {
-                _repository.Add(primitiveEvent.Id, new List<PrimitiveEvent>());
+                _store.Add(primitiveEvent.Id, new List<PrimitiveEvent>());
             }
 
             primitiveEvent.SequenceNumber = _sequenceNumber++;
 
-            _repository[primitiveEvent.Id].Add(primitiveEvent);
+            _store[primitiveEvent.Id].Add(primitiveEvent);
+
+            return _sequenceNumber;
+        }
+
+        public long GetSequenceNumber(Guid id)
+        {
+            return _sequenceNumber;
+        }
+
+        public async Task RemoveAsync(Guid id)
+        {
+            Remove(id);
+
+            await Task.CompletedTask;
+        }
+
+        public async Task<IEnumerable<PrimitiveEvent>> GetAsync(Guid id)
+        {
+            return await Task.FromResult(Get(id));
+        }
+
+        public async ValueTask<long> SaveAsync(PrimitiveEvent primitiveEvent)
+        {
+            return await new ValueTask<long>(Save(primitiveEvent));
+        }
+
+        public async ValueTask<long> GetSequenceNumberAsync(Guid id)
+        {
+            return await new ValueTask<long>(GetSequenceNumber(id));
         }
     }
 }
