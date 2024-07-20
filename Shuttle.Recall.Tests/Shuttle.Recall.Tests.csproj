@@ -15,8 +15,8 @@
 
   <ItemGroup>
     <PackageReference Include="NUnit" Version="3.14.0" />
-    <PackageReference Include="Shuttle.Recall" Version="17.0.2" />
-    <PackageReference Include="Shuttle.Recall.Logging" Version="17.0.2" />
+    <PackageReference Include="Shuttle.Recall" Version="18.0.0" />
+    <PackageReference Include="Shuttle.Recall.Logging" Version="18.0.0" />
   </ItemGroup>
 
 </Project>
