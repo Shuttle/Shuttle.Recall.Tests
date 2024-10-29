@@ -1,9 +1,8 @@
-﻿namespace Shuttle.Recall.Tests
+﻿namespace Shuttle.Recall.Tests;
+
+public class ItemAdded
 {
-	public class ItemAdded
-	{
-		public string Product { get; set; }
-		public double Quantity { get; set; }
-		public double Cost { get; set; }
-	}
+    public double Cost { get; set; }
+    public string Product { get; set; } = string.Empty;
+    public double Quantity { get; set; }
 }

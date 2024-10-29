@@ -3,71 +3,46 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Shuttle.Core.Contract;
 
-namespace Shuttle.Recall.Tests.Memory.Fakes
+namespace Shuttle.Recall.Tests.Memory.Fakes;
+
+public class MemoryPrimitiveEventRepository : IPrimitiveEventRepository
 {
-    public class MemoryPrimitiveEventRepository : IPrimitiveEventRepository
+    private static long _sequenceNumber = 1;
+    private readonly Dictionary<Guid, List<PrimitiveEvent>> _store;
+
+    public MemoryPrimitiveEventRepository(Dictionary<Guid, List<PrimitiveEvent>> store)
     {
-        private static long _sequenceNumber = 1;
-        private readonly Dictionary<Guid, List<PrimitiveEvent>> _store;
+        _store = Guard.AgainstNull(store);
+    }
 
-        public MemoryPrimitiveEventRepository(Dictionary<Guid, List<PrimitiveEvent>> store)
+    public async Task RemoveAsync(Guid id)
+    {
+        _store.Remove(id);
+
+        await Task.CompletedTask;
+    }
+
+    public async Task<IEnumerable<PrimitiveEvent>> GetAsync(Guid id)
+    {
+        return await Task.FromResult(_store.TryGetValue(id, out var value) ? value : new());
+    }
+
+    public async ValueTask<long> SaveAsync(PrimitiveEvent primitiveEvent)
+    {
+        if (!_store.ContainsKey(Guard.AgainstNull(primitiveEvent).Id))
         {
-            Guard.AgainstNull(store, nameof(store));
-
-            _store = store;
+            _store.Add(primitiveEvent.Id, new());
         }
 
-        public void Remove(Guid id)
-        {
-            _store.Remove(id);
-        }
+        primitiveEvent.SequenceNumber = _sequenceNumber++;
 
-        public IEnumerable<PrimitiveEvent> Get(Guid id)
-        {
-            return _store.ContainsKey(id) ? _store[id] : new List<PrimitiveEvent>();
-        }
+        _store[primitiveEvent.Id].Add(primitiveEvent);
 
-        public long Save(PrimitiveEvent primitiveEvent)
-        {
-            Guard.AgainstNull(primitiveEvent, nameof(primitiveEvent));
+        return await new ValueTask<long>(_sequenceNumber);
+    }
 
-            if (!_store.ContainsKey(primitiveEvent.Id))
-            {
-                _store.Add(primitiveEvent.Id, new List<PrimitiveEvent>());
-            }
-
-            primitiveEvent.SequenceNumber = _sequenceNumber++;
-
-            _store[primitiveEvent.Id].Add(primitiveEvent);
-
-            return _sequenceNumber;
-        }
-
-        public long GetSequenceNumber(Guid id)
-        {
-            return _sequenceNumber;
-        }
-
-        public async Task RemoveAsync(Guid id)
-        {
-            Remove(id);
-
-            await Task.CompletedTask;
-        }
-
-        public async Task<IEnumerable<PrimitiveEvent>> GetAsync(Guid id)
-        {
-            return await Task.FromResult(Get(id));
-        }
-
-        public async ValueTask<long> SaveAsync(PrimitiveEvent primitiveEvent)
-        {
-            return await new ValueTask<long>(Save(primitiveEvent));
-        }
-
-        public async ValueTask<long> GetSequenceNumberAsync(Guid id)
-        {
-            return await new ValueTask<long>(GetSequenceNumber(id));
-        }
+    public async ValueTask<long> GetSequenceNumberAsync(Guid id)
+    {
+        return await new ValueTask<long>(_sequenceNumber);
     }
 }

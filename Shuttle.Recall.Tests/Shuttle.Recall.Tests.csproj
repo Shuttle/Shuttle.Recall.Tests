@@ -1,8 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <nullable>enable</nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,9 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NUnit" Version="3.14.0" />
-    <PackageReference Include="Shuttle.Recall" Version="18.0.0" />
-    <PackageReference Include="Shuttle.Recall.Logging" Version="18.0.0" />
+    <PackageReference Include="NUnit" Version="4.2.2" />
+    <PackageReference Include="Shuttle.Recall" Version="20.0.0" />
+    <PackageReference Include="Shuttle.Recall.Logging" Version="20.0.0" />
   </ItemGroup>
 
 </Project>

@@ -1,47 +1,25 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Shuttle.Recall.Tests
+namespace Shuttle.Recall.Tests;
+
+public class OrderHandler : IEventHandler<ItemAdded>
 {
-    public class OrderHandler :
-        IEventHandler<ItemAdded>,
-        IEventHandler<OrderSnapshot>,
-        IAsyncEventHandler<ItemAdded>,
-        IAsyncEventHandler<OrderSnapshot>
+    private int _count;
+    private DateTime _timeOutDate = DateTime.MaxValue;
+    public bool HasTimedOut => _timeOutDate < DateTime.Now;
+
+    public bool IsComplete => _count == 4; // 4 x ItemAdded events from ExerciseStorageAsync
+
+    public async Task ProcessEventAsync(IEventHandlerContext<ItemAdded> context)
     {
-        private int _count;
-        private DateTime _timeOutDate = DateTime.MaxValue;
+        _count++;
 
-        public bool IsComplete => _count == 5;
-        public bool HasTimedOut => _timeOutDate < DateTime.Now;
+        await Task.CompletedTask;
+    }
 
-        public void ProcessEvent(IEventHandlerContext<ItemAdded> context)
-        {
-            _count++;
-        }
-
-        public void ProcessEvent(IEventHandlerContext<OrderSnapshot> context)
-        {
-            _count++;
-        }
-
-        public void Start(int handlerTimeoutSeconds)
-        {
-            _timeOutDate = DateTime.Now.AddSeconds(handlerTimeoutSeconds < 5 ? 5 : handlerTimeoutSeconds);
-        }
-
-        public async Task ProcessEventAsync(IEventHandlerContext<ItemAdded> context)
-        {
-            _count++;
-
-            await Task.CompletedTask;
-        }
-
-        public async Task ProcessEventAsync(IEventHandlerContext<OrderSnapshot> context)
-        {
-            _count++;
-
-            await Task.CompletedTask;
-        }
+    public void Start(int handlerTimeoutSeconds)
+    {
+        _timeOutDate = DateTime.Now.AddSeconds(handlerTimeoutSeconds < 5 ? 5 : handlerTimeoutSeconds);
     }
 }
