@@ -124,10 +124,8 @@ public class RecallFixture
 
         var eventStore = serviceProvider.GetRequiredService<IEventStore>();
 
-        {
-            await eventStore.RemoveAsync(OrderId).ConfigureAwait(false);
-            await eventStore.RemoveAsync(OrderProcessId).ConfigureAwait(false);
-        }
+        await eventStore.RemoveAsync(OrderId).ConfigureAwait(false);
+        await eventStore.RemoveAsync(OrderProcessId).ConfigureAwait(false);
 
         var orderStream = await eventStore.GetAsync(OrderId).ConfigureAwait(false);
         var orderProcessStream = await eventStore.GetAsync(OrderProcessId).ConfigureAwait(false);

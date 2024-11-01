@@ -22,23 +22,26 @@ public class MemoryPrimitiveEventRepository : IPrimitiveEventRepository
         await Task.CompletedTask;
     }
 
+    public async ValueTask<long> SaveAsync(IEnumerable<PrimitiveEvent> primitiveEvents)
+    {
+        foreach (var primitiveEvent in primitiveEvents)
+        {
+            if (!_store.ContainsKey(Guard.AgainstNull(primitiveEvent).Id))
+            {
+                _store.Add(primitiveEvent.Id, new());
+            }
+
+            primitiveEvent.SequenceNumber = _sequenceNumber++;
+
+            _store[primitiveEvent.Id].Add(primitiveEvent);
+        }
+
+        return await new ValueTask<long>(_sequenceNumber);
+    }
+
     public async Task<IEnumerable<PrimitiveEvent>> GetAsync(Guid id)
     {
         return await Task.FromResult(_store.TryGetValue(id, out var value) ? value : new());
-    }
-
-    public async ValueTask<long> SaveAsync(PrimitiveEvent primitiveEvent)
-    {
-        if (!_store.ContainsKey(Guard.AgainstNull(primitiveEvent).Id))
-        {
-            _store.Add(primitiveEvent.Id, new());
-        }
-
-        primitiveEvent.SequenceNumber = _sequenceNumber++;
-
-        _store[primitiveEvent.Id].Add(primitiveEvent);
-
-        return await new ValueTask<long>(_sequenceNumber);
     }
 
     public async ValueTask<long> GetSequenceNumberAsync(Guid id)
