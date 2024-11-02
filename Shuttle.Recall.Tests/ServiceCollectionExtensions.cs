@@ -16,7 +16,7 @@ public static class ServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider>(new FixtureFileLoggerProvider(Guard.AgainstNullOrEmptyString(test))));
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, ConsoleLoggerProvider>());
 
-        services.AddRecallLogging(builder =>
+        services.AddEventStoreLogging(builder =>
         {
             builder.Options.Threading = true;
         });
