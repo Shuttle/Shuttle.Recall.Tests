@@ -13,17 +13,14 @@ public class MemoryFixture : RecallFixture
     public async Task Should_be_able_to_exercise_event_processing_async()
     {
         var services = new ServiceCollection();
-
         var store = new Dictionary<Guid, List<PrimitiveEvent>>();
+        var projectionRepository = new MemoryProjectionRepository();
 
-        services.AddSingleton<IProjectionRepository, MemoryProjectionRepository>();
+        services.AddSingleton<IProjectionRepository>(projectionRepository);
         services.AddSingleton<IPrimitiveEventRepository>(new MemoryPrimitiveEventRepository(store));
-        services.AddSingleton<IPrimitiveEventQuery>(new MemoryPrimitiveEventQuery(store));
-        services.AddEventStore();
+        services.AddSingleton<IProjectionEventProvider>(new MemoryProjectionEventProvider(store, projectionRepository));
 
-        await ExerciseStorageAsync(services);
         await ExerciseEventProcessingAsync(services, handlerTimeoutSeconds: 600);
-        await ExerciseStorageRemovalAsync(services);
     }
 
     [Test]
@@ -35,10 +32,7 @@ public class MemoryFixture : RecallFixture
 
         services.AddSingleton<IProjectionRepository, MemoryProjectionRepository>();
         services.AddSingleton<IPrimitiveEventRepository>(new MemoryPrimitiveEventRepository(store));
-        services.AddSingleton<IPrimitiveEventQuery>(new MemoryPrimitiveEventQuery(store));
-        services.AddEventStore();
 
         await ExerciseStorageAsync(services);
-        await ExerciseStorageRemovalAsync(services);
     }
 }
