@@ -21,11 +21,17 @@ public class RecallFixture
         services.AddEventStore(builder =>
         {
             builder.AddProjection("recall-fixture").AddEventHandler(handler);
+
+            builder.SuppressEventProcessorHostedService();
         });
 
         services.AddTransient<OrderHandler>();
 
         var serviceProvider = services.BuildServiceProvider();
+
+        serviceProviderCallback?.Invoke(serviceProvider);
+
+        await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
         var eventStore = serviceProvider.GetRequiredService<IEventStore>();
 
@@ -42,10 +48,6 @@ public class RecallFixture
         orderStream.Add(order.AddItem("4kg bag of potatoes", 5, 15.35));
 
         await eventStore.SaveAsync(orderStream).ConfigureAwait(false);
-
-        serviceProviderCallback?.Invoke(serviceProvider);
-
-        await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
         var processor = serviceProvider.GetRequiredService<IEventProcessor>();
 
