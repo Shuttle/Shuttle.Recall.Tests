@@ -7,5 +7,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyProduct("Shuttle.Recall.Tests")]
 [assembly: AssemblyCompany("Eben Roux")]
 [assembly: AssemblyConfiguration("Release")]
-[assembly: AssemblyInformationalVersion("20.0.0")]
+[assembly: AssemblyInformationalVersion("#{SemanticVersion}#")]
 [assembly: ComVisible(false)]

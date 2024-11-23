@@ -74,7 +74,10 @@ public class RecallFixture
     {
         Guard.AgainstNull(services).ConfigureLogging(nameof(ExerciseStorageAsync));
 
-        services.AddEventStore();
+        services.AddEventStore(builder =>
+        {
+            builder.SuppressEventProcessorHostedService();
+        });
 
         var serviceProvider = services.BuildServiceProvider();
 
