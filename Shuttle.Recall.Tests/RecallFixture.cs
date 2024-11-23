@@ -12,7 +12,7 @@ public class RecallFixture
     public static readonly Guid OrderId = new("047FF6FB-FB57-4F63-8795-99F252EDA62F");
     public static readonly Guid OrderProcessId = new("74937207-F430-4746-9F31-4E76EF2FA7E6");
 
-    public async Task ExerciseEventProcessingAsync(IServiceCollection services, Action<IServiceProvider>? serviceProviderCallback = null, int handlerTimeoutSeconds = 5)
+    public async Task ExerciseEventProcessingAsync(IServiceCollection services, Action<EventStoreBuilder>? eventStoreBuilderCallback = null, Action<IServiceProvider>? serviceProviderCallback = null, int handlerTimeoutSeconds = 5)
     {
         Guard.AgainstNull(services).ConfigureLogging(nameof(ExerciseEventProcessingAsync));
 
@@ -23,6 +23,8 @@ public class RecallFixture
             builder.AddProjection("recall-fixture").AddEventHandler(handler);
 
             builder.SuppressEventProcessorHostedService();
+
+            eventStoreBuilderCallback?.Invoke(builder);
         });
 
         services.AddTransient<OrderHandler>();

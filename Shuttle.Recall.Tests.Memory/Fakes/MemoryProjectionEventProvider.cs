@@ -7,20 +7,19 @@ using Shuttle.Core.Contract;
 
 namespace Shuttle.Recall.Tests.Memory.Fakes;
 
-public class MemoryProjectionEventProvider : IProjectionEventProvider
+public class MemoryProjectionService : IProjectionService
 {
-    private readonly IProjectionRepository _projectionRepository;
+    private readonly Dictionary<string, long> _sequenceNumbers = new();
     private readonly Dictionary<Guid, List<PrimitiveEvent>> _store;
     private readonly SemaphoreSlim _lock = new(1, 1);
     private int _managedThreadId;
 
-    public MemoryProjectionEventProvider(Dictionary<Guid, List<PrimitiveEvent>> store, IProjectionRepository projectionRepository)
+    public MemoryProjectionService(Dictionary<Guid, List<PrimitiveEvent>> store)
     {
         _store = Guard.AgainstNull(store);
-        _projectionRepository = Guard.AgainstNull(projectionRepository);
     }
 
-    public async Task<ProjectionEvent?> GetAsync()
+    public async Task<ProjectionEvent?> GetProjectionEventAsync()
     {
         await _lock.WaitAsync();
 
@@ -45,7 +44,11 @@ public class MemoryProjectionEventProvider : IProjectionEventProvider
 
             var queryable = all.AsQueryable();
 
-            var sequenceNumber = await _projectionRepository.GetSequenceNumberAsync("recall-fixture");
+
+
+            var sequenceNumber = _sequenceNumbers.TryGetValue("recall-fixture", out var number)
+                ? number
+                : 0;
 
             var primitiveEvent = queryable.FirstOrDefault(item => item.SequenceNumber > sequenceNumber);
 
@@ -60,5 +63,12 @@ public class MemoryProjectionEventProvider : IProjectionEventProvider
         {
             _lock.Release();
         }
+    }
+
+    public async Task SetSequenceNumberAsync(string projectionName, long sequenceNumber)
+    {
+        _sequenceNumbers[projectionName] = sequenceNumber;
+
+        await Task.CompletedTask;
     }
 }

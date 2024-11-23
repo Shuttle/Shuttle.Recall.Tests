@@ -14,11 +14,9 @@ public class MemoryFixture : RecallFixture
     {
         var services = new ServiceCollection();
         var store = new Dictionary<Guid, List<PrimitiveEvent>>();
-        var projectionRepository = new MemoryProjectionRepository();
 
-        services.AddSingleton<IProjectionRepository>(projectionRepository);
         services.AddSingleton<IPrimitiveEventRepository>(new MemoryPrimitiveEventRepository(store));
-        services.AddSingleton<IProjectionEventProvider>(new MemoryProjectionEventProvider(store, projectionRepository));
+        services.AddSingleton<IProjectionService>(new MemoryProjectionService(store));
 
         await ExerciseEventProcessingAsync(services, handlerTimeoutSeconds: 600);
     }
@@ -30,7 +28,6 @@ public class MemoryFixture : RecallFixture
 
         var store = new Dictionary<Guid, List<PrimitiveEvent>>();
 
-        services.AddSingleton<IProjectionRepository, MemoryProjectionRepository>();
         services.AddSingleton<IPrimitiveEventRepository>(new MemoryPrimitiveEventRepository(store));
 
         await ExerciseStorageAsync(services);
