@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Transactions;
 using Shuttle.Core.Contract;
 
 namespace Shuttle.Recall.Tests.Memory.Fakes;
@@ -17,16 +19,23 @@ public class MemoryPrimitiveEventRepository : IPrimitiveEventRepository
 
     public async Task RemoveAsync(Guid id)
     {
-        await _primitiveEventStore.RemoveAsync(id);
+        await _primitiveEventStore.RemoveAggregateAsync(id);
     }
 
     public async ValueTask<long> SaveAsync(IEnumerable<PrimitiveEvent> primitiveEvents)
     {
         long sequenceNumber = 0;
 
-        foreach (var primitiveEvent in primitiveEvents)
+        var primitiveEventJournals = primitiveEvents.Select(item=>new PrimitiveEventJournal(item)).ToList();
+
+        foreach (var primitiveEventJournal in primitiveEventJournals)
         {
-            sequenceNumber = await _primitiveEventStore.AddAsync(primitiveEvent);
+            sequenceNumber = await _primitiveEventStore.AddAsync(primitiveEventJournal);
+        }
+
+        if (Transaction.Current != null)
+        {
+            Transaction.Current.EnlistVolatile(new PrimitiveEventJournalResourceManager(_primitiveEventStore, primitiveEventJournals), EnlistmentOptions.None);
         }
 
         return sequenceNumber;

@@ -1,19 +1,20 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Shuttle.Core.Contract;
+using Shuttle.Recall.Tests.Memory.Fakes;
 
 namespace Shuttle.Recall.Tests.Memory;
 
 public class PrimitiveEventStore : IPrimitiveEventStore
 {
-    private readonly Dictionary<Guid, List<PrimitiveEvent>> _store = new();
     private static long _sequenceNumber = 1;
-    private SemaphoreSlim _lock = new(1, 1);
+    private readonly SemaphoreSlim _lock = new(1, 1);
+    private readonly Dictionary<Guid, List<PrimitiveEventJournal>> _store = new();
 
-    public async Task RemoveAsync(Guid id)
+    public async Task RemoveAggregateAsync(Guid id)
     {
         await _lock.WaitAsync();
 
@@ -27,24 +28,24 @@ public class PrimitiveEventStore : IPrimitiveEventStore
         }
     }
 
-    public async ValueTask<long> AddAsync(PrimitiveEvent primitiveEvent)
+    public async ValueTask<long> AddAsync(PrimitiveEventJournal primitiveEventJournal)
     {
-        Guard.AgainstNull(primitiveEvent);
+        Guard.AgainstNull(primitiveEventJournal);
 
         await _lock.WaitAsync();
 
         try
         {
-            if (!_store.ContainsKey(Guard.AgainstNull(primitiveEvent).Id))
+            if (!_store.ContainsKey(Guard.AgainstNull(primitiveEventJournal.PrimitiveEvent).Id))
             {
-                _store.Add(primitiveEvent.Id, new());
+                _store.Add(primitiveEventJournal.PrimitiveEvent.Id, new());
             }
 
-            primitiveEvent.SequenceNumber = _sequenceNumber++;
+            primitiveEventJournal.PrimitiveEvent.SequenceNumber = _sequenceNumber++;
 
-            _store[primitiveEvent.Id].Add(primitiveEvent);
+            _store[primitiveEventJournal.PrimitiveEvent.Id].Add(primitiveEventJournal);
 
-            return primitiveEvent.SequenceNumber;
+            return primitiveEventJournal.PrimitiveEvent.SequenceNumber;
         }
         finally
         {
@@ -58,7 +59,7 @@ public class PrimitiveEventStore : IPrimitiveEventStore
 
         try
         {
-            return await Task.FromResult(_store.TryGetValue(id, out var value) ? value : new());
+            return await Task.FromResult(_store.TryGetValue(id, out var value) ? value.Select(item => item.PrimitiveEvent).ToList() : new());
         }
         finally
         {
@@ -72,7 +73,7 @@ public class PrimitiveEventStore : IPrimitiveEventStore
 
         try
         {
-            return _store.TryGetValue(id, out var value) ? value.Max(item => item.SequenceNumber) : 0;
+            return _store.TryGetValue(id, out var value) ? value.Max(item => item.PrimitiveEvent.SequenceNumber) : 0;
         }
         finally
         {
@@ -80,10 +81,46 @@ public class PrimitiveEventStore : IPrimitiveEventStore
         }
     }
 
-    public async Task<PrimitiveEvent?> GetNextPrimitiveEventAsync(long sequenceNumber)
+    public async Task<IEnumerable<PrimitiveEvent>> GetCommittedPrimitiveEventsAsync(long sequenceNumber)
     {
-        await Task.CompletedTask;
+        await _lock.WaitAsync();
 
-        return _store.Values.SelectMany(list => list).ToList().FirstOrDefault(item => item.SequenceNumber > sequenceNumber);
+        try
+        {
+            var primitiveEventJournals = _store.Values.SelectMany(list => list).ToList();
+
+            var uncommittedPrimitiveEventJournal = primitiveEventJournals
+                .OrderBy(item => item.PrimitiveEvent.SequenceNumber)
+                .FirstOrDefault(item => !item.Committed);
+
+            var minUncommittedSequenceNumber = uncommittedPrimitiveEventJournal != null ? uncommittedPrimitiveEventJournal.PrimitiveEvent.SequenceNumber : long.MaxValue;
+
+            return primitiveEventJournals
+                .Where(item => item.PrimitiveEvent.SequenceNumber > sequenceNumber && item.PrimitiveEvent.SequenceNumber < minUncommittedSequenceNumber)
+                .Select(item => item.PrimitiveEvent);
+        }
+        finally
+        {
+            _lock.Release();
+        }
+    }
+
+    public async Task RemoveEventAsync(Guid id, Guid eventId)
+    {
+        await _lock.WaitAsync();
+
+        try
+        {
+            if (!_store.TryGetValue(id, out var value))
+            {
+                return;
+            }
+
+            value.RemoveAll(item => item.PrimitiveEvent.Id == eventId);
+        }
+        finally
+        {
+            _lock.Release();
+        }
     }
 }

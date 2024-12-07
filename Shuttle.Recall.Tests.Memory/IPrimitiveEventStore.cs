@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Shuttle.Recall.Tests.Memory.Fakes;
 
 namespace Shuttle.Recall.Tests.Memory;
 
 public interface IPrimitiveEventStore
 {
-    Task RemoveAsync(Guid id);
-    ValueTask<long> AddAsync(PrimitiveEvent primitiveEvent);
+    Task RemoveAggregateAsync(Guid id);
+    ValueTask<long> AddAsync(PrimitiveEventJournal primitiveEventJournal);
     Task<IEnumerable<PrimitiveEvent>> GetAsync(Guid id);
     ValueTask<long> GetSequenceNumberAsync(Guid id);
-    Task<PrimitiveEvent?> GetNextPrimitiveEventAsync(long sequenceNumber);
+    Task<IEnumerable<PrimitiveEvent>> GetCommittedPrimitiveEventsAsync(long sequenceNumber);
+    Task RemoveEventAsync(Guid id, Guid eventId);
 }
