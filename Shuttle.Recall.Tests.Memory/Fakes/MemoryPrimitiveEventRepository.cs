@@ -7,45 +7,38 @@ namespace Shuttle.Recall.Tests.Memory.Fakes;
 
 public class MemoryPrimitiveEventRepository : IPrimitiveEventRepository
 {
-    private static long _sequenceNumber = 1;
-    private readonly Dictionary<Guid, List<PrimitiveEvent>> _store;
+    private readonly IPrimitiveEventStore _primitiveEventStore;
+    
 
-    public MemoryPrimitiveEventRepository(Dictionary<Guid, List<PrimitiveEvent>> store)
+    public MemoryPrimitiveEventRepository(IPrimitiveEventStore primitiveEventStore)
     {
-        _store = Guard.AgainstNull(store);
+        _primitiveEventStore = Guard.AgainstNull(primitiveEventStore);
     }
 
     public async Task RemoveAsync(Guid id)
     {
-        _store.Remove(id);
-
-        await Task.CompletedTask;
+        await _primitiveEventStore.RemoveAsync(id);
     }
 
     public async ValueTask<long> SaveAsync(IEnumerable<PrimitiveEvent> primitiveEvents)
     {
+        long sequenceNumber = 0;
+
         foreach (var primitiveEvent in primitiveEvents)
         {
-            if (!_store.ContainsKey(Guard.AgainstNull(primitiveEvent).Id))
-            {
-                _store.Add(primitiveEvent.Id, new());
-            }
-
-            primitiveEvent.SequenceNumber = _sequenceNumber++;
-
-            _store[primitiveEvent.Id].Add(primitiveEvent);
+            sequenceNumber = await _primitiveEventStore.AddAsync(primitiveEvent);
         }
 
-        return await new ValueTask<long>(_sequenceNumber);
+        return sequenceNumber;
     }
 
     public async Task<IEnumerable<PrimitiveEvent>> GetAsync(Guid id)
     {
-        return await Task.FromResult(_store.TryGetValue(id, out var value) ? value : new());
+        return await _primitiveEventStore.GetAsync(id);
     }
 
     public async ValueTask<long> GetSequenceNumberAsync(Guid id)
     {
-        return await new ValueTask<long>(_sequenceNumber);
+        return await _primitiveEventStore.GetSequenceNumberAsync(id);
     }
 }

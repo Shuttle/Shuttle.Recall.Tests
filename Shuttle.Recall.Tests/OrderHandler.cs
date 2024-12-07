@@ -1,19 +1,26 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Shuttle.Recall.Tests;
 
 public class OrderHandler : IEventHandler<ItemAdded>
 {
-    private int _count;
+    private readonly List<ItemAdded> _events = new();
     private DateTime _timeOutDate = DateTime.MaxValue;
     public bool HasTimedOut => _timeOutDate < DateTime.Now;
 
-    public bool IsComplete => _count == 4; // 4 x ItemAdded events from ExerciseStorageAsync
+    public bool IsComplete => _events.Count == 4;
 
     public async Task ProcessEventAsync(IEventHandlerContext<ItemAdded> context)
     {
-        _count++;
+        if (_events.FirstOrDefault(item => item.Product.Equals(context.Event.Product, StringComparison.InvariantCultureIgnoreCase)) != null)
+        {
+            return;
+        }
+
+        _events.Add(context.Event);
 
         await Task.CompletedTask;
     }

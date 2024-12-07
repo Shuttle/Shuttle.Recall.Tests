@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using NUnit.Framework;
 using Shuttle.Recall.Tests.Memory.Fakes;
 
@@ -12,23 +11,48 @@ public class MemoryFixture : RecallFixture
     [Test]
     public async Task Should_be_able_to_exercise_event_processing_async()
     {
-        var services = new ServiceCollection();
-        var store = new Dictionary<Guid, List<PrimitiveEvent>>();
+        var services = new ServiceCollection()
+            .AddSingleton<IPrimitiveEventStore>(new PrimitiveEventStore())
+            .AddSingleton<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>()
+            .AddSingleton<IProjectionService, MemoryProjectionService>()
+            .AddSingleton<IHostedService, MemoryFixtureHostedService>()
+            .AddSingleton<MemoryFixtureStartupObserver>();
 
-        services.AddSingleton<IPrimitiveEventRepository>(new MemoryPrimitiveEventRepository(store));
-        services.AddSingleton<IProjectionService>(new MemoryProjectionService(store));
+        await ExerciseEventProcessingAsync(services);
+    }
 
-        await ExerciseEventProcessingAsync(services, handlerTimeoutSeconds: 600);
+    [Test]
+    public async Task Should_be_able_to_exercise_event_processing_with_delay_async()
+    {
+        var services = new ServiceCollection()
+            .AddSingleton<IPrimitiveEventStore>(new PrimitiveEventStore())
+            .AddSingleton<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>()
+            .AddSingleton<IProjectionService, MemoryProjectionService>()
+            .AddSingleton<IHostedService, MemoryFixtureHostedService>()
+            .AddSingleton<MemoryFixtureStartupObserver>();
+
+        await ExerciseEventProcessingWithDelayAsync(services);
+    }
+
+    [Test]
+    public async Task Should_be_able_to_exercise_event_processing_with_failure_async()
+    {
+        var services = new ServiceCollection()
+            .AddSingleton<IPrimitiveEventStore>(new PrimitiveEventStore())
+            .AddSingleton<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>()
+            .AddSingleton<IProjectionService, MemoryProjectionService>()
+            .AddSingleton<IHostedService, MemoryFixtureHostedService>()
+            .AddSingleton<MemoryFixtureStartupObserver>();
+
+        await ExerciseEventProcessingWithFailureAsync(services);
     }
 
     [Test]
     public async Task Should_be_able_to_exercise_event_store_async()
     {
-        var services = new ServiceCollection();
-
-        var store = new Dictionary<Guid, List<PrimitiveEvent>>();
-
-        services.AddSingleton<IPrimitiveEventRepository>(new MemoryPrimitiveEventRepository(store));
+        var services = new ServiceCollection()
+            .AddSingleton<IPrimitiveEventStore>(new PrimitiveEventStore())
+            .AddSingleton<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>();
 
         await ExerciseStorageAsync(services);
     }
