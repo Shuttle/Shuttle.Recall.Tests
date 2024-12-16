@@ -15,16 +15,17 @@ public class RecallFixture
     public static readonly Guid OrderBId = new("4587FA22-641B-4E79-A110-4350D237E7E2");
     public static readonly Guid OrderProcessId = new("74937207-F430-4746-9F31-4E76EF2FA7E6");
 
+    protected IEnumerable<Guid> AggregateIds = [OrderAId, OrderBId, OrderProcessId];
+
     /// <summary>
     ///     Event processing where 4 `ItemAdded` events are processed by the `OrderHandler` projection.
     /// </summary>
-    public async Task ExerciseEventProcessingAsync(IServiceCollection services, Action<EventStoreBuilder>? eventStoreBuilderCallback = null, Action<IServiceProvider>? serviceProviderCallback = null, int handlerTimeoutSeconds = 5)
+    public async Task ExerciseEventProcessingAsync(FixtureConfiguration fixtureConfiguration)
     {
-        Guard.AgainstNull(services).ConfigureLogging(nameof(ExerciseEventProcessingAsync));
-
         var handler = new OrderHandler();
 
-        var serviceProvider = services
+        var serviceProvider = Guard.AgainstNull(fixtureConfiguration).Services
+            .ConfigureLogging(nameof(ExerciseEventProcessingAsync))
             .AddTransient<OrderHandler>()
             .AddEventStore(builder =>
             {
@@ -32,11 +33,13 @@ public class RecallFixture
 
                 builder.SuppressEventProcessorHostedService();
 
-                eventStoreBuilderCallback?.Invoke(builder);
+                fixtureConfiguration.EventStoreBuilderCallback?.Invoke(builder);
             })
             .BuildServiceProvider();
 
-        serviceProviderCallback?.Invoke(serviceProvider);
+        fixtureConfiguration.ServiceProviderCallback?.Invoke(serviceProvider);
+
+        await (fixtureConfiguration.RemoveIdsCallback?.Invoke(AggregateIds) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -57,7 +60,7 @@ public class RecallFixture
 
         var processor = serviceProvider.GetRequiredService<IEventProcessor>();
 
-        handler.Start(handlerTimeoutSeconds);
+        handler.Start(fixtureConfiguration.HandlerTimeout);
 
         await processor.StartAsync().ConfigureAwait(false);
 
@@ -81,13 +84,12 @@ public class RecallFixture
     ///     been completed.
     ///     This would preserver the global sequence number tracking of the projection.
     /// </summary>
-    public async Task ExerciseEventProcessingWithDelayAsync(IServiceCollection services, Action<EventStoreBuilder>? eventStoreBuilderCallback = null, Action<IServiceProvider>? serviceProviderCallback = null, int handlerTimeoutSeconds = 5)
+    public async Task ExerciseEventProcessingWithDelayAsync(FixtureConfiguration fixtureConfiguration)
     {
-        Guard.AgainstNull(services).ConfigureLogging(nameof(ExerciseEventProcessingWithDelayAsync));
-
         var processedEventCount = 0;
 
-        var serviceProvider = services
+        var serviceProvider = Guard.AgainstNull(fixtureConfiguration).Services
+            .ConfigureLogging(nameof(ExerciseEventProcessingWithDelayAsync))
             .AddTransient<OrderHandler>()
             .AddEventStore(builder =>
             {
@@ -102,11 +104,13 @@ public class RecallFixture
 
                 builder.SuppressEventProcessorHostedService();
 
-                eventStoreBuilderCallback?.Invoke(builder);
+                fixtureConfiguration.EventStoreBuilderCallback?.Invoke(builder);
             })
             .BuildServiceProvider();
 
-        serviceProviderCallback?.Invoke(serviceProvider);
+        fixtureConfiguration.ServiceProviderCallback?.Invoke(serviceProvider);
+
+        await (fixtureConfiguration.RemoveIdsCallback?.Invoke(AggregateIds) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -122,19 +126,31 @@ public class RecallFixture
 
         tasks.Add(Task.Run(async () =>
         {
-            try
+            async Task Func()
             {
-                var order = new Order(OrderAId);
-                var orderStream = await eventStore.GetAsync(OrderAId).ConfigureAwait(false);
+                try
+                {
+                    var order = new Order(OrderAId);
+                    var orderStream = await eventStore.GetAsync(OrderAId).ConfigureAwait(false);
 
-                orderStream.Add(order.AddItem("item-1", 1, 100));
-                orderStream.Add(order.AddItem("item-2", 2, 200));
+                    orderStream.Add(order.AddItem("item-1", 1, 100));
+                    orderStream.Add(order.AddItem("item-2", 2, 200));
 
-                await eventStore.SaveAsync(orderStream).ConfigureAwait(false);
+                    await eventStore.SaveAsync(orderStream).ConfigureAwait(false);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
             }
-            finally
+
+            if (fixtureConfiguration.EventStreamTaskCallback == null)
             {
-                semaphore.Release();
+                await Func();
+            }
+            else
+            {
+                await fixtureConfiguration.EventStreamTaskCallback.Invoke(Func);
             }
         }));
 
@@ -142,33 +158,57 @@ public class RecallFixture
 
         tasks.Add(Task.Run(async () =>
         {
-            semaphore.Release();
+            async Task Func()
+            {
+                semaphore.Release();
 
-            var order = new Order(OrderBId);
-            var orderStream = await eventStore.GetAsync(OrderBId).ConfigureAwait(false);
+                var order = new Order(OrderBId);
+                var orderStream = await eventStore.GetAsync(OrderBId).ConfigureAwait(false);
 
-            orderStream.Add(order.AddItem("item-1", 1, 100));
-            orderStream.Add(order.AddItem("item-2", 2, 200));
+                orderStream.Add(order.AddItem("item-1", 1, 100));
+                orderStream.Add(order.AddItem("item-2", 2, 200));
 
-            await eventStore.SaveAsync(orderStream).ConfigureAwait(false);
+                await eventStore.SaveAsync(orderStream).ConfigureAwait(false);
 
-            await Task.Delay(2000);
+                await Task.Delay(2000);
+            }
+
+            if (fixtureConfiguration.EventStreamTaskCallback == null)
+            {
+                await Func();
+            }
+            else
+            {
+                await fixtureConfiguration.EventStreamTaskCallback.Invoke(Func);
+            }
         }));
 
         tasks.Add(Task.Run(async () =>
         {
-            var order = new Order(OrderAId);
-            var orderStream = await eventStore.GetAsync(OrderAId).ConfigureAwait(false);
+            async Task Func()
+            {
+                var order = new Order(OrderAId);
+                var orderStream = await eventStore.GetAsync(OrderAId).ConfigureAwait(false);
 
-            orderStream.Add(order.AddItem("item-3", 3, 300));
-            orderStream.Add(order.AddItem("item-4", 4, 400));
+                orderStream.Add(order.AddItem("item-3", 3, 300));
+                orderStream.Add(order.AddItem("item-4", 4, 400));
 
-            await eventStore.SaveAsync(orderStream).ConfigureAwait(false);
+                await eventStore.SaveAsync(orderStream).ConfigureAwait(false);
+            }
+
+            if (fixtureConfiguration.EventStreamTaskCallback == null)
+            {
+                await Func();
+            }
+            else
+            {
+                await fixtureConfiguration.EventStreamTaskCallback.Invoke(Func);
+            }
         }));
 
         var processor = serviceProvider.GetRequiredService<IEventProcessor>();
 
-        var timeout = DateTime.Now.AddSeconds(handlerTimeoutSeconds);
+        var timeout = DateTime.Now.Add(fixtureConfiguration.HandlerTimeout);
         var hasTimedOut = false;
 
         await processor.StartAsync().ConfigureAwait(false);
@@ -194,13 +234,12 @@ public class RecallFixture
     ///     Event processing where 4 `ItemAdded` events are processed by the `OrderHandler` projection.
     ///     However, there is a transient error that occurs during the processing of the 3rd event.
     /// </summary>
-    public async Task ExerciseEventProcessingWithFailureAsync(IServiceCollection services, Action<EventStoreBuilder>? eventStoreBuilderCallback = null, Action<IServiceProvider>? serviceProviderCallback = null, int handlerTimeoutSeconds = 5)
+    public async Task ExerciseEventProcessingWithFailureAsync(FixtureConfiguration fixtureConfiguration)
     {
-        Guard.AgainstNull(services).ConfigureLogging(nameof(ExerciseEventProcessingWithFailureAsync));
-
         var handler = new OrderHandler();
 
-        var serviceProvider = services
+        var serviceProvider = Guard.AgainstNull(fixtureConfiguration.Services)
+            .ConfigureLogging(nameof(ExerciseEventProcessingWithFailureAsync))
             .AddTransient<OrderHandler>()
             .AddEventStore(builder =>
             {
@@ -208,12 +247,14 @@ public class RecallFixture
 
                 builder.SuppressEventProcessorHostedService();
 
-                eventStoreBuilderCallback?.Invoke(builder);
+                fixtureConfiguration.EventStoreBuilderCallback?.Invoke(builder);
             })
             .AddSingleton<IHostedService, FailureFixtureHostedService>()
             .BuildServiceProvider();
 
-        serviceProviderCallback?.Invoke(serviceProvider);
+        fixtureConfiguration.ServiceProviderCallback?.Invoke(serviceProvider);
+
+        await (fixtureConfiguration.RemoveIdsCallback?.Invoke(AggregateIds) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -234,7 +275,7 @@ public class RecallFixture
 
         var processor = serviceProvider.GetRequiredService<IEventProcessor>();
 
-        handler.Start(handlerTimeoutSeconds);
+        handler.Start(fixtureConfiguration.HandlerTimeout);
 
         await processor.StartAsync().ConfigureAwait(false);
 
@@ -250,19 +291,22 @@ public class RecallFixture
         await eventStore.RemoveAsync(OrderAId).ConfigureAwait(false);
     }
 
-    public async Task ExerciseStorageAsync(IServiceCollection services, Action<IServiceProvider>? serviceProviderCallback = null)
+    public async Task ExerciseStorageAsync(FixtureConfiguration fixtureConfiguration)
     {
-        Guard.AgainstNull(services).ConfigureLogging(nameof(ExerciseStorageAsync));
-
-        services
+        Guard.AgainstNull(fixtureConfiguration).Services
+            .ConfigureLogging(nameof(ExerciseStorageAsync))
             .AddEventStore(builder =>
             {
+                fixtureConfiguration.EventStoreBuilderCallback?.Invoke(builder);
+
                 builder.SuppressEventProcessorHostedService();
             });
 
-        var serviceProvider = services.BuildServiceProvider();
+        var serviceProvider = fixtureConfiguration.Services.BuildServiceProvider();
 
-        serviceProviderCallback?.Invoke(serviceProvider);
+        fixtureConfiguration.ServiceProviderCallback?.Invoke(serviceProvider);
+
+        await (fixtureConfiguration.RemoveIdsCallback?.Invoke(AggregateIds) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 

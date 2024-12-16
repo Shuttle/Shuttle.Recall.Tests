@@ -25,8 +25,8 @@ public class OrderHandler : IEventHandler<ItemAdded>
         await Task.CompletedTask;
     }
 
-    public void Start(int handlerTimeoutSeconds)
+    public void Start(TimeSpan handlerTimeout)
     {
-        _timeOutDate = DateTime.Now.AddSeconds(handlerTimeoutSeconds < 5 ? 5 : handlerTimeoutSeconds);
+        _timeOutDate = DateTime.Now.Add(handlerTimeout);
     }
 }

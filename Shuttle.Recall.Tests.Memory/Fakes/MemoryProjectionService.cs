@@ -9,7 +9,7 @@ using Shuttle.Core.Threading;
 namespace Shuttle.Recall.Tests.Memory.Fakes;
 
 /// <summary>
-///     This is a rather naive implementation of a projection service in that we only have the 'recall-fixture' projection
+///     This is a naive implementation of a projection service in that we only have the 'recall-fixture' projection
 ///     to worry about.
 /// </summary>
 public class MemoryProjectionService : IProjectionService
@@ -66,9 +66,9 @@ public class MemoryProjectionService : IProjectionService
         }
     }
 
-    public async Task SetSequenceNumberAsync(string projectionName, long sequenceNumber)
+    public async Task AcknowledgeAsync(ProjectionEvent projectionEvent)
     {
-        _projectionSequenceNumbers[projectionName] = sequenceNumber;
+        _projectionSequenceNumbers[projectionEvent.Projection.Name] = projectionEvent.PrimitiveEvent.SequenceNumber;
 
         await Task.CompletedTask;
     }

@@ -18,7 +18,7 @@ public class MemoryFixture : RecallFixture
             .AddSingleton<IHostedService, MemoryFixtureHostedService>()
             .AddSingleton<MemoryFixtureStartupObserver>();
 
-        await ExerciseEventProcessingAsync(services, handlerTimeoutSeconds: 600);
+        await ExerciseEventProcessingAsync(new(services));
     }
 
     [Test]
@@ -31,7 +31,7 @@ public class MemoryFixture : RecallFixture
             .AddSingleton<IHostedService, MemoryFixtureHostedService>()
             .AddSingleton<MemoryFixtureStartupObserver>();
 
-        await ExerciseEventProcessingWithDelayAsync(services, handlerTimeoutSeconds: 600);
+        await ExerciseEventProcessingWithDelayAsync(new(services));
     }
 
     [Test]
@@ -44,7 +44,7 @@ public class MemoryFixture : RecallFixture
             .AddSingleton<IHostedService, MemoryFixtureHostedService>()
             .AddSingleton<MemoryFixtureStartupObserver>();
 
-        await ExerciseEventProcessingWithFailureAsync(services, handlerTimeoutSeconds: 600);
+        await ExerciseEventProcessingWithFailureAsync(new(services));
     }
 
     [Test]
@@ -54,6 +54,6 @@ public class MemoryFixture : RecallFixture
             .AddSingleton<IPrimitiveEventStore>(new PrimitiveEventStore())
             .AddSingleton<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>();
 
-        await ExerciseStorageAsync(services);
+        await ExerciseStorageAsync(new(services));
     }
 }
