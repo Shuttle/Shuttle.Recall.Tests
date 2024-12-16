@@ -39,7 +39,7 @@ public class RecallFixture
 
         fixtureConfiguration.ServiceProviderCallback?.Invoke(serviceProvider);
 
-        await (fixtureConfiguration.RemoveIdsCallback?.Invoke(AggregateIds) ?? Task.CompletedTask);
+        await (fixtureConfiguration.RemoveIdsCallback?.Invoke(serviceProvider, AggregateIds) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -110,7 +110,7 @@ public class RecallFixture
 
         fixtureConfiguration.ServiceProviderCallback?.Invoke(serviceProvider);
 
-        await (fixtureConfiguration.RemoveIdsCallback?.Invoke(AggregateIds) ?? Task.CompletedTask);
+        await (fixtureConfiguration.RemoveIdsCallback?.Invoke(serviceProvider, AggregateIds) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -150,7 +150,7 @@ public class RecallFixture
             }
             else
             {
-                await fixtureConfiguration.EventStreamTaskCallback.Invoke(Func);
+                await fixtureConfiguration.EventStreamTaskCallback.Invoke(serviceProvider, Func);
             }
         }));
 
@@ -179,7 +179,7 @@ public class RecallFixture
             }
             else
             {
-                await fixtureConfiguration.EventStreamTaskCallback.Invoke(Func);
+                await fixtureConfiguration.EventStreamTaskCallback.Invoke(serviceProvider, Func);
             }
         }));
 
@@ -202,7 +202,7 @@ public class RecallFixture
             }
             else
             {
-                await fixtureConfiguration.EventStreamTaskCallback.Invoke(Func);
+                await fixtureConfiguration.EventStreamTaskCallback.Invoke(serviceProvider, Func);
             }
         }));
 
@@ -254,7 +254,7 @@ public class RecallFixture
 
         fixtureConfiguration.ServiceProviderCallback?.Invoke(serviceProvider);
 
-        await (fixtureConfiguration.RemoveIdsCallback?.Invoke(AggregateIds) ?? Task.CompletedTask);
+        await (fixtureConfiguration.RemoveIdsCallback?.Invoke(serviceProvider, AggregateIds) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -306,7 +306,7 @@ public class RecallFixture
 
         fixtureConfiguration.ServiceProviderCallback?.Invoke(serviceProvider);
 
-        await (fixtureConfiguration.RemoveIdsCallback?.Invoke(AggregateIds) ?? Task.CompletedTask);
+        await (fixtureConfiguration.RemoveIdsCallback?.Invoke(serviceProvider, AggregateIds) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 

@@ -11,9 +11,9 @@ public class FixtureConfiguration
     public IServiceCollection Services { get; }
     public Action<EventStoreBuilder>? EventStoreBuilderCallback { get; private set; }
     public Action<IServiceProvider>? ServiceProviderCallback { get; private set; }
-    public Func<IEnumerable<Guid>, Task>? RemoveIdsCallback { get; private set; }
+    public Func<IServiceProvider, IEnumerable<Guid>, Task>? RemoveIdsCallback { get; private set; }
     public TimeSpan HandlerTimeout { get; private set; } = TimeSpan.FromSeconds(5);
-    public Func<Func<Task>, Task>? EventStreamTaskCallback { get; set; }
+    public Func<IServiceProvider, Func<Task>, Task>? EventStreamTaskCallback { get; set; }
 
     public FixtureConfiguration(IServiceCollection services)
     {
@@ -32,7 +32,7 @@ public class FixtureConfiguration
         return this;
     }
 
-    public FixtureConfiguration WithRemoveIdsCallback(Func<IEnumerable<Guid>, Task> removeIdsCallback)
+    public FixtureConfiguration WithRemoveIdsCallback(Func<IServiceProvider, IEnumerable<Guid>, Task> removeIdsCallback)
     {
         RemoveIdsCallback = Guard.AgainstNull(removeIdsCallback);
         return this;
@@ -44,7 +44,7 @@ public class FixtureConfiguration
         return this;
     }
 
-    public FixtureConfiguration WithEventStreamTaskCallback(Func<Func<Task>, Task> eventStreamTaskCallback)
+    public FixtureConfiguration WithEventStreamTaskCallback(Func<IServiceProvider, Func<Task>, Task> eventStreamTaskCallback)
     {
         EventStreamTaskCallback = Guard.AgainstNull(eventStreamTaskCallback);
         return this;
