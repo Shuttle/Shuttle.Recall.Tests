@@ -39,7 +39,7 @@ public class RecallFixture
             })
             .BuildServiceProvider();
 
-        fixtureConfiguration.StartingAsync?.Invoke(serviceProvider);
+        await (fixtureConfiguration.StartingAsync?.Invoke(serviceProvider) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -72,8 +72,6 @@ public class RecallFixture
         await processor.StopAsync().ConfigureAwait(false);
 
         Assert.That(handler.HasTimedOut, Is.False, "The handler has timed out.  Not all of the events have been processed by the projection.");
-
-        await eventStore.RemoveAsync(OrderAId).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -157,6 +155,8 @@ public class RecallFixture
                 fixtureConfiguration.AddEventStore?.Invoke(builder);
             })
             .BuildServiceProvider();
+
+        await (fixtureConfiguration.StartingAsync?.Invoke(serviceProvider) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -260,9 +260,6 @@ public class RecallFixture
                 Assert.That(aggregate.Value.Select(item => item.PrimitiveEvent.SequenceNumber).ToList(), Is.Ordered, $"Projection '{projectionAggregate.Key}' has aggregate '{aggregate.Key}' where the sequence numbers are not ordered.");
             }
         }
-
-        await eventStore.RemoveAsync(OrderAId).ConfigureAwait(false);
-        await eventStore.RemoveAsync(OrderBId).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -297,7 +294,7 @@ public class RecallFixture
             })
             .BuildServiceProvider();
 
-        fixtureConfiguration.StartingAsync?.Invoke(serviceProvider);
+        await (fixtureConfiguration.StartingAsync?.Invoke(serviceProvider) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -412,9 +409,6 @@ public class RecallFixture
         await processor.StopAsync().ConfigureAwait(false);
 
         Assert.That(hasTimedOut, Is.False, "The fixture has timed out.  Not all of the events have been processed by the projection.");
-
-        await eventStore.RemoveAsync(OrderAId).ConfigureAwait(false);
-        await eventStore.RemoveAsync(OrderBId).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -439,7 +433,7 @@ public class RecallFixture
             .AddSingleton<IHostedService, FailureFixtureHostedService>()
             .BuildServiceProvider();
 
-        fixtureConfiguration.StartingAsync?.Invoke(serviceProvider);
+        await (fixtureConfiguration.StartingAsync?.Invoke(serviceProvider) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -472,8 +466,6 @@ public class RecallFixture
         await processor.StopAsync().ConfigureAwait(false);
 
         Assert.That(handler.HasTimedOut, Is.False, "The handler has timed out.  Not all of the events have been processed by the projection.");
-
-        await eventStore.RemoveAsync(OrderAId).ConfigureAwait(false);
     }
 
     public async Task ExerciseStorageAsync(FixtureConfiguration fixtureConfiguration)
@@ -489,7 +481,7 @@ public class RecallFixture
 
         var serviceProvider = fixtureConfiguration.Services.BuildServiceProvider();
 
-        fixtureConfiguration.StartingAsync?.Invoke(serviceProvider);
+        await (fixtureConfiguration.StartingAsync?.Invoke(serviceProvider) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
