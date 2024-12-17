@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Shuttle.Core.Contract;
@@ -10,10 +9,10 @@ public class FixtureConfiguration
 {
     public IServiceCollection Services { get; }
     public Action<EventStoreBuilder>? AddEventStore { get; private set; }
-    public Action<IServiceProvider>? ServiceProviderAvailable { get; private set; }
+    public Func<IServiceProvider, Task>? StartingAsync { get; private set; }
     public TimeSpan HandlerTimeout { get; private set; } = TimeSpan.FromSeconds(5);
-    public Func<IServiceProvider, Func<Task>, Task>? EventStreamTask { get; set; }
-    public Func<IEventHandlerContext<ItemAdded>, Task>? ItemAdded { get; set; }
+    public Func<IServiceProvider, Func<Task>, Task>? EventStreamTaskAsync { get; set; }
+    public Func<IEventHandlerContext<ItemAdded>, Task>? ItemAddedAsync { get; set; }
     public int VolumeIterationCount { get; set; } = 100;
 
     public FixtureConfiguration(IServiceCollection services)
@@ -27,9 +26,9 @@ public class FixtureConfiguration
         return this;
     }
 
-    public FixtureConfiguration WithServiceProviderAvailable(Action<IServiceProvider> serviceProviderAvailable)
+    public FixtureConfiguration WithServiceProviderAvailable(Func<IServiceProvider, Task> starting)
     {
-        ServiceProviderAvailable = Guard.AgainstNull(serviceProviderAvailable);
+        StartingAsync = Guard.AgainstNull(starting);
         return this;
     }
 
@@ -41,13 +40,13 @@ public class FixtureConfiguration
 
     public FixtureConfiguration WithEventStreamTask(Func<IServiceProvider, Func<Task>, Task> eventStreamTask)
     {
-        EventStreamTask = Guard.AgainstNull(eventStreamTask);
+        EventStreamTaskAsync = Guard.AgainstNull(eventStreamTask);
         return this;
     }
 
     public FixtureConfiguration WithItemAdded(Func<IEventHandlerContext<ItemAdded>, Task> itemAdded)
     {
-        ItemAdded = Guard.AgainstNull(itemAdded);
+        ItemAddedAsync = Guard.AgainstNull(itemAdded);
         return this;
     }
 }

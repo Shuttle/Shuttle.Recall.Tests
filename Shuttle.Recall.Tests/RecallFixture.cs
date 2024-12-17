@@ -39,7 +39,7 @@ public class RecallFixture
             })
             .BuildServiceProvider();
 
-        fixtureConfiguration.ServiceProviderAvailable?.Invoke(serviceProvider);
+        fixtureConfiguration.StartingAsync?.Invoke(serviceProvider);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -127,7 +127,7 @@ public class RecallFixture
 
                     logger.LogDebug($"[recall-fixture-a] : event count = {processedEventCountA} / aggregate id = '{context.PrimitiveEvent.Id}' / product = '{context.Event.Product}' / sequence number = {context.PrimitiveEvent.SequenceNumber}");
 
-                    await (fixtureConfiguration.ItemAdded?.Invoke(context) ?? Task.CompletedTask);
+                    await (fixtureConfiguration.ItemAddedAsync?.Invoke(context) ?? Task.CompletedTask);
                 });
 
                 builder.AddProjection("recall-fixture-b").AddEventHandler(async (ILogger<RecallFixture> logger, IEventHandlerContext<ItemAdded> context) =>
@@ -138,7 +138,7 @@ public class RecallFixture
 
                     logger.LogDebug($"[recall-fixture-b] : event count = {processedEventCountB} / aggregate id = '{context.PrimitiveEvent.Id}' / product = '{context.Event.Product}' / sequence number = {context.PrimitiveEvent.SequenceNumber}");
 
-                    await (fixtureConfiguration.ItemAdded?.Invoke(context) ?? Task.CompletedTask);
+                    await (fixtureConfiguration.ItemAddedAsync?.Invoke(context) ?? Task.CompletedTask);
                 });
 
                 builder.AddProjection("recall-fixture-c").AddEventHandler(async (ILogger<RecallFixture> logger, IEventHandlerContext<ItemAdded> context) =>
@@ -149,7 +149,7 @@ public class RecallFixture
 
                     logger.LogDebug($"[recall-fixture-c] : event count = {processedEventCountC} / aggregate id = '{context.PrimitiveEvent.Id}' / product = '{context.Event.Product}' / sequence number = {context.PrimitiveEvent.SequenceNumber}");
 
-                    await (fixtureConfiguration.ItemAdded?.Invoke(context) ?? Task.CompletedTask);
+                    await (fixtureConfiguration.ItemAddedAsync?.Invoke(context) ?? Task.CompletedTask);
                 });
 
                 builder.SuppressEventProcessorHostedService();
@@ -196,13 +196,13 @@ public class RecallFixture
                         await Task.Delay(GetDelay());
                     }
 
-                    if (fixtureConfiguration.EventStreamTask == null)
+                    if (fixtureConfiguration.EventStreamTaskAsync == null)
                     {
                         await Func();
                     }
                     else
                     {
-                        await fixtureConfiguration.EventStreamTask.Invoke(serviceProvider, Func);
+                        await fixtureConfiguration.EventStreamTaskAsync.Invoke(serviceProvider, Func);
                     }
                 }));
 
@@ -222,13 +222,13 @@ public class RecallFixture
                         await Task.Delay(GetDelay());
                     }
 
-                    if (fixtureConfiguration.EventStreamTask == null)
+                    if (fixtureConfiguration.EventStreamTaskAsync == null)
                     {
                         await Func();
                     }
                     else
                     {
-                        await fixtureConfiguration.EventStreamTask.Invoke(serviceProvider, Func);
+                        await fixtureConfiguration.EventStreamTaskAsync.Invoke(serviceProvider, Func);
                     }
                 }));
             }
@@ -297,7 +297,7 @@ public class RecallFixture
             })
             .BuildServiceProvider();
 
-        fixtureConfiguration.ServiceProviderAvailable?.Invoke(serviceProvider);
+        fixtureConfiguration.StartingAsync?.Invoke(serviceProvider);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -331,13 +331,13 @@ public class RecallFixture
                 }
             }
 
-            if (fixtureConfiguration.EventStreamTask == null)
+            if (fixtureConfiguration.EventStreamTaskAsync == null)
             {
                 await Func();
             }
             else
             {
-                await fixtureConfiguration.EventStreamTask.Invoke(serviceProvider, Func);
+                await fixtureConfiguration.EventStreamTaskAsync.Invoke(serviceProvider, Func);
             }
         }));
 
@@ -360,13 +360,13 @@ public class RecallFixture
                 await Task.Delay(2000);
             }
 
-            if (fixtureConfiguration.EventStreamTask == null)
+            if (fixtureConfiguration.EventStreamTaskAsync == null)
             {
                 await Func();
             }
             else
             {
-                await fixtureConfiguration.EventStreamTask.Invoke(serviceProvider, Func);
+                await fixtureConfiguration.EventStreamTaskAsync.Invoke(serviceProvider, Func);
             }
         }));
 
@@ -383,13 +383,13 @@ public class RecallFixture
                 await eventStore.SaveAsync(orderStream).ConfigureAwait(false);
             }
 
-            if (fixtureConfiguration.EventStreamTask == null)
+            if (fixtureConfiguration.EventStreamTaskAsync == null)
             {
                 await Func();
             }
             else
             {
-                await fixtureConfiguration.EventStreamTask.Invoke(serviceProvider, Func);
+                await fixtureConfiguration.EventStreamTaskAsync.Invoke(serviceProvider, Func);
             }
         }));
 
@@ -439,7 +439,7 @@ public class RecallFixture
             .AddSingleton<IHostedService, FailureFixtureHostedService>()
             .BuildServiceProvider();
 
-        fixtureConfiguration.ServiceProviderAvailable?.Invoke(serviceProvider);
+        fixtureConfiguration.StartingAsync?.Invoke(serviceProvider);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -489,7 +489,7 @@ public class RecallFixture
 
         var serviceProvider = fixtureConfiguration.Services.BuildServiceProvider();
 
-        fixtureConfiguration.ServiceProviderAvailable?.Invoke(serviceProvider);
+        fixtureConfiguration.StartingAsync?.Invoke(serviceProvider);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
