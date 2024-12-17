@@ -11,7 +11,6 @@ public class FixtureConfiguration
     public IServiceCollection Services { get; }
     public Action<EventStoreBuilder>? AddEventStore { get; private set; }
     public Action<IServiceProvider>? ServiceProviderAvailable { get; private set; }
-    public Func<IServiceProvider, IEnumerable<Guid>, Task>? RemoveIds { get; private set; }
     public TimeSpan HandlerTimeout { get; private set; } = TimeSpan.FromSeconds(5);
     public Func<IServiceProvider, Func<Task>, Task>? EventStreamTask { get; set; }
     public Func<IEventHandlerContext<ItemAdded>, Task>? ItemAdded { get; set; }
@@ -31,12 +30,6 @@ public class FixtureConfiguration
     public FixtureConfiguration WithServiceProviderAvailable(Action<IServiceProvider> serviceProviderAvailable)
     {
         ServiceProviderAvailable = Guard.AgainstNull(serviceProviderAvailable);
-        return this;
-    }
-
-    public FixtureConfiguration WithRemoveIds(Func<IServiceProvider, IEnumerable<Guid>, Task> removeIds)
-    {
-        RemoveIds = Guard.AgainstNull(removeIds);
         return this;
     }
 

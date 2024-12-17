@@ -17,7 +17,7 @@ public class RecallFixture
     public static readonly Guid OrderBId = new("4587FA22-641B-4E79-A110-4350D237E7E2");
     public static readonly Guid OrderProcessId = new("74937207-F430-4746-9F31-4E76EF2FA7E6");
 
-    protected IEnumerable<Guid> AggregateIds = [OrderAId, OrderBId, OrderProcessId];
+    protected IEnumerable<Guid> KnownAggregateIds = [OrderAId, OrderBId, OrderProcessId];
 
     /// <summary>
     ///     Event processing where 4 `ItemAdded` events are processed by the `OrderHandler` projection.
@@ -40,8 +40,6 @@ public class RecallFixture
             .BuildServiceProvider();
 
         fixtureConfiguration.ServiceProviderAvailable?.Invoke(serviceProvider);
-
-        await (fixtureConfiguration.RemoveIds?.Invoke(serviceProvider, AggregateIds) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -301,8 +299,6 @@ public class RecallFixture
 
         fixtureConfiguration.ServiceProviderAvailable?.Invoke(serviceProvider);
 
-        await (fixtureConfiguration.RemoveIds?.Invoke(serviceProvider, AggregateIds) ?? Task.CompletedTask);
-
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
         var eventStore = serviceProvider.GetRequiredService<IEventStore>();
@@ -445,8 +441,6 @@ public class RecallFixture
 
         fixtureConfiguration.ServiceProviderAvailable?.Invoke(serviceProvider);
 
-        await (fixtureConfiguration.RemoveIds?.Invoke(serviceProvider, AggregateIds) ?? Task.CompletedTask);
-
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
         var eventStore = serviceProvider.GetRequiredService<IEventStore>();
@@ -496,8 +490,6 @@ public class RecallFixture
         var serviceProvider = fixtureConfiguration.Services.BuildServiceProvider();
 
         fixtureConfiguration.ServiceProviderAvailable?.Invoke(serviceProvider);
-
-        await (fixtureConfiguration.RemoveIds?.Invoke(serviceProvider, AggregateIds) ?? Task.CompletedTask);
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
