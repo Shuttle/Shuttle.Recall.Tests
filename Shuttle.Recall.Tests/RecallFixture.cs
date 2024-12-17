@@ -84,7 +84,7 @@ public class RecallFixture
     ///     Only run this in an environment where you intend clearing/managing the data manually.
     ///     Each iteration of the volume test will add 5 aggregates with 5 events each.
     /// </summary>
-    public async Task ExerciseEventProcessingVolume(FixtureConfiguration fixtureConfiguration)
+    public async Task ExerciseEventProcessingVolumeAsync(FixtureConfiguration fixtureConfiguration)
     {
         var processedEventCountA = 0;
         var processedEventCountB = 0;
@@ -117,7 +117,7 @@ public class RecallFixture
         }
 
         var serviceProvider = Guard.AgainstNull(fixtureConfiguration).Services
-            .ConfigureLogging(nameof(ExerciseEventProcessingVolume))
+            .ConfigureLogging(nameof(ExerciseEventProcessingVolumeAsync))
             .AddTransient<OrderHandler>()
             .AddEventStore(builder =>
             {

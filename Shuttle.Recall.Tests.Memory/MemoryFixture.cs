@@ -33,7 +33,7 @@ public class MemoryFixture : RecallFixture
             .AddSingleton<IHostedService, MemoryFixtureHostedService>()
             .AddSingleton<MemoryFixtureStartupObserver>();
 
-        await ExerciseEventProcessingVolume(new FixtureConfiguration(services).WithHandlerTimeout(TimeSpan.FromMinutes(5)));
+        await ExerciseEventProcessingVolumeAsync(new FixtureConfiguration(services).WithHandlerTimeout(TimeSpan.FromMinutes(5)));
     }
 
     [Test]
