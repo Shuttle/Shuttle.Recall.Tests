@@ -26,7 +26,7 @@ public class FixtureConfiguration
         return this;
     }
 
-    public FixtureConfiguration WithServiceProviderAvailable(Func<IServiceProvider, Task> starting)
+    public FixtureConfiguration WithStarting(Func<IServiceProvider, Task> starting)
     {
         StartingAsync = Guard.AgainstNull(starting);
         return this;
