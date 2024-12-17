@@ -103,6 +103,8 @@ public class RecallFixture
             }
 
             projectionAggregates[projectionName][context.PrimitiveEvent.Id].Add(new(context.PrimitiveEvent, context.Event));
+
+            await Task.CompletedTask;
         }
 
         var serviceProvider = Guard.AgainstNull(fixtureConfiguration).Services
