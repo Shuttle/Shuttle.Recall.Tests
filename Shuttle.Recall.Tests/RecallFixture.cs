@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using Shuttle.Core.Contract;
+using Shuttle.Core.Pipelines;
 
 namespace Shuttle.Recall.Tests;
 
@@ -16,6 +17,7 @@ public class RecallFixture
     public static readonly Guid OrderAId = new("047FF6FB-FB57-4F63-8795-99F252EDA62F");
     public static readonly Guid OrderBId = new("4587FA22-641B-4E79-A110-4350D237E7E2");
     public static readonly Guid OrderProcessId = new("74937207-F430-4746-9F31-4E76EF2FA7E6");
+    private readonly Type _eventProcessingPipeline = typeof(EventProcessingPipeline);
 
     protected IEnumerable<Guid> KnownAggregateIds = [OrderAId, OrderBId, OrderProcessId];
 
@@ -90,26 +92,17 @@ public class RecallFixture
 
         async Task AddProcessedItem(string projectionName, IEventHandlerContext<ItemAdded> context)
         {
-            await semaphore.WaitAsync();
-
-            try
+            if (!projectionAggregates.ContainsKey(projectionName))
             {
-                if (!projectionAggregates.ContainsKey(projectionName))
-                {
-                    projectionAggregates.Add(projectionName, new());
-                }
-
-                if (!projectionAggregates[projectionName].ContainsKey(context.PrimitiveEvent.Id))
-                {
-                    projectionAggregates[projectionName].Add(context.PrimitiveEvent.Id, new());
-                }
-
-                projectionAggregates[projectionName][context.PrimitiveEvent.Id].Add(new(context.PrimitiveEvent, context.Event));
+                projectionAggregates.Add(projectionName, new());
             }
-            finally
+
+            if (!projectionAggregates[projectionName].ContainsKey(context.PrimitiveEvent.Id))
             {
-                semaphore.Release();
+                projectionAggregates[projectionName].Add(context.PrimitiveEvent.Id, new());
             }
+
+            projectionAggregates[projectionName][context.PrimitiveEvent.Id].Add(new(context.PrimitiveEvent, context.Event));
         }
 
         var serviceProvider = Guard.AgainstNull(fixtureConfiguration).Services
@@ -119,44 +112,123 @@ public class RecallFixture
             {
                 builder.AddProjection("recall-fixture-a").AddEventHandler(async (ILogger<RecallFixture> logger, IEventHandlerContext<ItemAdded> context) =>
                 {
-                    processedEventCountA++;
+                    await semaphore.WaitAsync();
 
-                    await AddProcessedItem("recall-fixture-a", context);
+                    try
+                    {
+                        processedEventCountA++;
 
-                    logger.LogDebug($"[recall-fixture-a] : event count = {processedEventCountA} / aggregate id = '{context.PrimitiveEvent.Id}' / product = '{context.Event.Product}' / sequence number = {context.PrimitiveEvent.SequenceNumber}");
+                        await AddProcessedItem("recall-fixture-a", context);
+
+                        logger.LogDebug($"[recall-fixture-a] : event count = {processedEventCountA} / aggregate id = '{context.PrimitiveEvent.Id}' / product = '{context.Event.Product}' / sequence number = {context.PrimitiveEvent.SequenceNumber}");
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
 
                     await (fixtureConfiguration.ItemAddedAsync?.Invoke(context) ?? Task.CompletedTask);
                 });
 
                 builder.AddProjection("recall-fixture-b").AddEventHandler(async (ILogger<RecallFixture> logger, IEventHandlerContext<ItemAdded> context) =>
                 {
-                    processedEventCountB++;
+                    await semaphore.WaitAsync();
 
-                    await AddProcessedItem("recall-fixture-b", context);
+                    try
+                    {
+                        processedEventCountB++;
 
-                    logger.LogDebug($"[recall-fixture-b] : event count = {processedEventCountB} / aggregate id = '{context.PrimitiveEvent.Id}' / product = '{context.Event.Product}' / sequence number = {context.PrimitiveEvent.SequenceNumber}");
+                        await AddProcessedItem("recall-fixture-b", context);
+
+                        logger.LogDebug($"[recall-fixture-b] : event count = {processedEventCountB} / aggregate id = '{context.PrimitiveEvent.Id}' / product = '{context.Event.Product}' / sequence number = {context.PrimitiveEvent.SequenceNumber}");
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
 
                     await (fixtureConfiguration.ItemAddedAsync?.Invoke(context) ?? Task.CompletedTask);
                 });
 
                 builder.AddProjection("recall-fixture-c").AddEventHandler(async (ILogger<RecallFixture> logger, IEventHandlerContext<ItemAdded> context) =>
                 {
-                    processedEventCountC++;
+                    await semaphore.WaitAsync();
 
-                    await AddProcessedItem("recall-fixture-c", context);
+                    try
+                    {
+                        processedEventCountC++;
 
-                    logger.LogDebug($"[recall-fixture-c] : event count = {processedEventCountC} / aggregate id = '{context.PrimitiveEvent.Id}' / product = '{context.Event.Product}' / sequence number = {context.PrimitiveEvent.SequenceNumber}");
+                        await AddProcessedItem("recall-fixture-c", context);
+
+                        logger.LogDebug($"[recall-fixture-c] : event count = {processedEventCountC} / aggregate id = '{context.PrimitiveEvent.Id}' / product = '{context.Event.Product}' / sequence number = {context.PrimitiveEvent.SequenceNumber}");
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
 
                     await (fixtureConfiguration.ItemAddedAsync?.Invoke(context) ?? Task.CompletedTask);
                 });
 
                 builder.SuppressEventProcessorHostedService();
 
+                builder.Options.DurationToSleepWhenIdle = [TimeSpan.FromMilliseconds(25)];
+
                 fixtureConfiguration.AddEventStore?.Invoke(builder);
             })
             .BuildServiceProvider();
 
         await (fixtureConfiguration.StartingAsync?.Invoke(serviceProvider) ?? Task.CompletedTask);
+
+        var pipelineFactory = serviceProvider.GetRequiredService<IPipelineFactory>();
+
+        var idleProcessorThreads = new Dictionary<int, bool>();
+
+        pipelineFactory.PipelineCreated += (_, pipelineEventArgs) =>
+        {
+            var pipelineType = pipelineEventArgs.Pipeline.GetType();
+
+            if (pipelineType == _eventProcessingPipeline)
+            {
+                pipelineEventArgs.Pipeline.AddObserver(async (IPipelineContext<OnAbortPipeline> pipelineContext) =>
+                {
+                    var processorThreadManagedThreadId = pipelineContext.Pipeline.State.GetProcessorThreadManagedThreadId();
+
+                    await semaphore.WaitAsync();
+
+                    try
+                    {
+                        if (!idleProcessorThreads.TryAdd(processorThreadManagedThreadId, true))
+                        {
+                            idleProcessorThreads[processorThreadManagedThreadId] = true;
+                        }
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                });
+
+                pipelineEventArgs.Pipeline.AddObserver(async (IPipelineContext<OnAfterGetProjectionEvent> pipelineContext) =>
+                {
+                    var processorThreadManagedThreadId = pipelineContext.Pipeline.State.GetProcessorThreadManagedThreadId();
+
+                    await semaphore.WaitAsync();
+
+                    try
+                    {
+                        if (!idleProcessorThreads.TryAdd(processorThreadManagedThreadId, false))
+                        {
+                            idleProcessorThreads[processorThreadManagedThreadId] = false;
+                        }
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                });
+            }
+        };
 
         await serviceProvider.StartHostedServicesAsync().ConfigureAwait(false);
 
@@ -168,7 +240,10 @@ public class RecallFixture
 
         var random = new Random();
 
-        int GetDelay() => random.Next(0, 100) < 25 ? random.Next(20, 100) : 0;
+        int GetDelay()
+        {
+            return random.Next(0, 100) < 25 ? random.Next(20, 100) : 0;
+        }
 
         var logger = serviceProvider.GetLogger<RecallFixture>();
 
@@ -220,6 +295,14 @@ public class RecallFixture
         var expectedProcessedEventCount = fixtureConfiguration.VolumeIterationCount * 25 * 3;
 
         while (processedEventCountA + processedEventCountB + processedEventCountC < expectedProcessedEventCount && !hasTimedOut)
+        {
+            Thread.Sleep(250);
+
+            hasTimedOut = DateTime.Now > timeout;
+        }
+
+        // Wait until all processor threads are idle.
+        while (!idleProcessorThreads.All(item => item.Value) && !hasTimedOut)
         {
             Thread.Sleep(250);
 

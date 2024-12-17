@@ -105,7 +105,7 @@ public class MemoryProjectionService : IProjectionService
                 return;
             }
 
-            foreach (var primitiveEvent in (await _primitiveEventStore.GetCommittedPrimitiveEventsAsync(projection.SequenceNumber)).OrderBy(item => item.SequenceNumber))
+            foreach (var primitiveEvent in (await _primitiveEventStore.GetCommittedPrimitiveEventsAsync(projection.SequenceNumber + 1)).OrderBy(item => item.SequenceNumber))
             {
                 var managedThreadId = _managedThreadIds[Math.Abs((primitiveEvent.CorrelationId ?? primitiveEvent.Id).GetHashCode()) % _managedThreadIds.Length];
 
