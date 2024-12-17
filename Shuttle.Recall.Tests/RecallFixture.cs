@@ -166,15 +166,16 @@ public class RecallFixture
 
         var eventStore = serviceProvider.GetRequiredService<IEventStore>();
 
-        var tasks = new List<Task>();
         var random = new Random();
 
-        int GetDelay() => random.Next(0, 100) < 5 ? random.Next(20, 100) : 0;
+        int GetDelay() => random.Next(0, 100) < 25 ? random.Next(20, 100) : 0;
 
         var logger = serviceProvider.GetLogger<RecallFixture>();
 
         for (var iteration = 0; iteration < fixtureConfiguration.VolumeIterationCount; iteration++)
         {
+            var tasks = new List<Task>();
+
             for (var aggregate = 0; aggregate < 5; aggregate++)
             {
                 var id = Guid.NewGuid();
@@ -190,29 +191,6 @@ public class RecallFixture
 
                         orderStream.Add(order.AddItem("item-1", 1, 100));
                         orderStream.Add(order.AddItem("item-2", 2, 200));
-
-                        await eventStore.SaveAsync(orderStream).ConfigureAwait(false);
-
-                        await Task.Delay(GetDelay());
-                    }
-
-                    if (fixtureConfiguration.EventStreamTaskAsync == null)
-                    {
-                        await Func();
-                    }
-                    else
-                    {
-                        await fixtureConfiguration.EventStreamTaskAsync.Invoke(serviceProvider, Func);
-                    }
-                }));
-
-                tasks.Add(Task.Run(async () =>
-                {
-                    async Task Func()
-                    {
-                        var order = new Order(id);
-                        var orderStream = await eventStore.GetAsync(id).ConfigureAwait(false);
-
                         orderStream.Add(order.AddItem("item-3", 3, 300));
                         orderStream.Add(order.AddItem("item-4", 4, 400));
                         orderStream.Add(order.AddItem("item-5", 5, 500));
