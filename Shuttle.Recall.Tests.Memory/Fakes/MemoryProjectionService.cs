@@ -16,10 +16,12 @@ public class MemoryProjectionService : IProjectionService
 {
     private readonly IEventProcessorConfiguration _eventProcessorConfiguration;
     private readonly SemaphoreSlim _lock = new(1, 1);
-    private readonly List<int> _managedThreadIds = new();
     private readonly IPrimitiveEventStore _primitiveEventStore;
-    private readonly List<PrimitiveEvent> _projectionJournal = new();
-    private readonly Dictionary<string, long> _projectionSequenceNumbers = new();
+    private readonly Dictionary<string, List<ThreadPrimitiveEvent>> _projectionThreadPrimitiveEvents = new();
+    private int[] _managedThreadIds = [];
+
+    private Projection[] _projections = [];
+    private int _roundRobinIndex;
 
     public MemoryProjectionService(IPrimitiveEventStore primitiveEventStore, IEventProcessorConfiguration eventProcessorConfiguration)
     {
@@ -29,7 +31,9 @@ public class MemoryProjectionService : IProjectionService
 
     public async Task<ProjectionEvent?> GetProjectionEventAsync(int processorThreadManagedThreadId)
     {
-        if (_managedThreadIds.Count == 0)
+        Projection? projection;
+
+        if (_projections.Length == 0)
         {
             return null;
         }
@@ -38,50 +42,80 @@ public class MemoryProjectionService : IProjectionService
 
         try
         {
-            var sequenceNumber = _projectionSequenceNumbers.TryGetValue("recall-fixture", out var number)
-                ? number
-                : 0;
-
-            var primitiveEvent = _projectionJournal
-                .OrderBy(item => item.SequenceNumber)
-                .FirstOrDefault(item => item.SequenceNumber > sequenceNumber);
-
-            if (primitiveEvent == null)
+            if (_roundRobinIndex >= _projections.Length)
             {
-                await GetProjectionJournalAsync(sequenceNumber);
-
-                return null;
+                _roundRobinIndex = 0;
             }
 
-            // This is a naive implementation of a round-robin distribution of events to processor threads.
-            var managedThreadId = _managedThreadIds[Math.Abs(primitiveEvent.Id.GetHashCode() % _managedThreadIds.Count)];
-
-            return managedThreadId != processorThreadManagedThreadId
-                ? null
-                : new(new("recall-fixture", sequenceNumber), primitiveEvent);
+            projection = _projections[_roundRobinIndex++];
         }
         finally
         {
             _lock.Release();
         }
+
+        var projectionThreadPrimitiveEvents = _projectionThreadPrimitiveEvents[projection.Name];
+
+        if (!projectionThreadPrimitiveEvents.Any())
+        {
+            await GetProjectionJournalAsync(projection);
+        }
+
+        if (!projectionThreadPrimitiveEvents.Any())
+        {
+            return null;
+        }
+
+        var threadPrimitiveEvent = projectionThreadPrimitiveEvents.FirstOrDefault(item => item.ManagedThreadId == processorThreadManagedThreadId);
+
+        return threadPrimitiveEvent == null ? null : new ProjectionEvent(projection, threadPrimitiveEvent.PrimitiveEvent);
     }
 
     public async Task AcknowledgeAsync(ProjectionEvent projectionEvent)
     {
-        _projectionSequenceNumbers[projectionEvent.Projection.Name] = projectionEvent.PrimitiveEvent.SequenceNumber;
+        await _lock.WaitAsync();
+
+        try
+        {
+            _projectionThreadPrimitiveEvents[projectionEvent.Projection.Name].RemoveAll(item => item.PrimitiveEvent.SequenceNumber == projectionEvent.PrimitiveEvent.SequenceNumber);
+        }
+        finally
+        {
+            _lock.Release();
+        }
+
+        projectionEvent.Projection.Commit(projectionEvent.PrimitiveEvent.SequenceNumber);
 
         await Task.CompletedTask;
     }
 
-    private async Task GetProjectionJournalAsync(long sequenceNumber)
+    private async Task GetProjectionJournalAsync(Projection projection)
     {
         // This would get the next batch of primitive event details for the service te return.
         // Include only event types that are handled in this process (IProjectionConfiguration).
         // Once entire batch has completed, update the sequence number for the projections.
         // This is a naive implementation and should be replaced with a more efficient one in actual implementations.
 
-        _projectionJournal.Clear();
-        _projectionJournal.AddRange(await _primitiveEventStore.GetCommittedPrimitiveEventsAsync(sequenceNumber));
+        await _lock.WaitAsync();
+
+        try
+        {
+            if (_projectionThreadPrimitiveEvents[projection.Name].Any())
+            {
+                return;
+            }
+
+            foreach (var primitiveEvent in (await _primitiveEventStore.GetCommittedPrimitiveEventsAsync(projection.SequenceNumber)).OrderBy(item => item.SequenceNumber))
+            {
+                var managedThreadId = _managedThreadIds[Math.Abs((primitiveEvent.CorrelationId ?? primitiveEvent.Id).GetHashCode()) % _managedThreadIds.Length];
+
+                _projectionThreadPrimitiveEvents[projection.Name].Add(new(managedThreadId, primitiveEvent));
+            }
+        }
+        finally
+        {
+            _lock.Release();
+        }
     }
 
     public async Task StartupAsync(IProcessorThreadPool processorThreadPool)
@@ -90,14 +124,24 @@ public class MemoryProjectionService : IProjectionService
 
         await Task.CompletedTask;
 
-        foreach (var projectionConfiguration in _eventProcessorConfiguration.Projections)
-        {
-            _projectionSequenceNumbers.Add(projectionConfiguration.Name, 0);
-        }
+        List<Projection> projections = new();
 
-        foreach (var processorThread in processorThreadPool.ProcessorThreads)
+        await _lock.WaitAsync();
+
+        try
         {
-            _managedThreadIds.Add(processorThread.ManagedThreadId);
+            foreach (var projectionConfiguration in _eventProcessorConfiguration.Projections)
+            {
+                projections.Add(new(projectionConfiguration.Name, 0));
+                _projectionThreadPrimitiveEvents.Add(projectionConfiguration.Name, new());
+            }
+
+            _projections = projections.ToArray();
+            _managedThreadIds = processorThreadPool.ProcessorThreads.Select(item => item.ManagedThreadId).ToArray();
+        }
+        finally
+        {
+            _lock.Release();
         }
     }
 }

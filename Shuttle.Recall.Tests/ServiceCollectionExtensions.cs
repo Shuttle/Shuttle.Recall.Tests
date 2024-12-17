@@ -16,11 +16,6 @@ public static class ServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider>(new FixtureFileLoggerProvider(Guard.AgainstNullOrEmptyString(test))));
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, ConsoleLoggerProvider>());
 
-        services.AddEventStoreLogging(builder =>
-        {
-            builder.Options.Threading = true;
-        });
-
         services.AddLogging(builder =>
         {
             builder.SetMinimumLevel(LogLevel.Trace);

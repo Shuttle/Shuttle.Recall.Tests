@@ -96,7 +96,7 @@ public class PrimitiveEventStore : IPrimitiveEventStore
             var minUncommittedSequenceNumber = uncommittedPrimitiveEventJournal != null ? uncommittedPrimitiveEventJournal.PrimitiveEvent.SequenceNumber : long.MaxValue;
 
             return primitiveEventJournals
-                .Where(item => item.PrimitiveEvent.SequenceNumber > sequenceNumber && item.PrimitiveEvent.SequenceNumber < minUncommittedSequenceNumber)
+                .Where(item => item.PrimitiveEvent.SequenceNumber >= sequenceNumber && item.PrimitiveEvent.SequenceNumber <= minUncommittedSequenceNumber)
                 .Select(item => item.PrimitiveEvent);
         }
         finally

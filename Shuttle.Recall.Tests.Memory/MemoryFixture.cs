@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NUnit.Framework;
@@ -18,7 +19,21 @@ public class MemoryFixture : RecallFixture
             .AddSingleton<IHostedService, MemoryFixtureHostedService>()
             .AddSingleton<MemoryFixtureStartupObserver>();
 
-        await ExerciseEventProcessingAsync(new(services));
+        await ExerciseEventProcessingAsync(new FixtureConfiguration(services)
+            .WithHandlerTimeout(TimeSpan.FromSeconds(5)));
+    }
+
+    [Test]
+    public async Task Should_be_able_to_exercise_event_processing_volume()
+    {
+        var services = new ServiceCollection()
+            .AddSingleton<IPrimitiveEventStore>(new PrimitiveEventStore())
+            .AddSingleton<IPrimitiveEventRepository, MemoryPrimitiveEventRepository>()
+            .AddSingleton<IProjectionService, MemoryProjectionService>()
+            .AddSingleton<IHostedService, MemoryFixtureHostedService>()
+            .AddSingleton<MemoryFixtureStartupObserver>();
+
+        await ExerciseEventProcessingVolume(new FixtureConfiguration(services).WithHandlerTimeout(TimeSpan.FromMinutes(5)));
     }
 
     [Test]

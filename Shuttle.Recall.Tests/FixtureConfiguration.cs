@@ -9,32 +9,34 @@ namespace Shuttle.Recall.Tests;
 public class FixtureConfiguration
 {
     public IServiceCollection Services { get; }
-    public Action<EventStoreBuilder>? EventStoreBuilderCallback { get; private set; }
-    public Action<IServiceProvider>? ServiceProviderCallback { get; private set; }
-    public Func<IServiceProvider, IEnumerable<Guid>, Task>? RemoveIdsCallback { get; private set; }
+    public Action<EventStoreBuilder>? AddEventStore { get; private set; }
+    public Action<IServiceProvider>? ServiceProviderAvailable { get; private set; }
+    public Func<IServiceProvider, IEnumerable<Guid>, Task>? RemoveIds { get; private set; }
     public TimeSpan HandlerTimeout { get; private set; } = TimeSpan.FromSeconds(5);
-    public Func<IServiceProvider, Func<Task>, Task>? EventStreamTaskCallback { get; set; }
+    public Func<IServiceProvider, Func<Task>, Task>? EventStreamTask { get; set; }
+    public Func<IEventHandlerContext<ItemAdded>, Task>? ItemAdded { get; set; }
+    public int VolumeIterationCount { get; set; } = 100;
 
     public FixtureConfiguration(IServiceCollection services)
     {
         Services = Guard.AgainstNull(services);
     }
 
-    public FixtureConfiguration WithEventStoreBuilderCallback(Action<EventStoreBuilder> eventStoreBuilderCallback)
+    public FixtureConfiguration WithAddEventStore(Action<EventStoreBuilder> addEventStore)
     {
-        EventStoreBuilderCallback = Guard.AgainstNull(eventStoreBuilderCallback);
+        AddEventStore = Guard.AgainstNull(addEventStore);
         return this;
     }
 
-    public FixtureConfiguration WithServiceProviderCallback(Action<IServiceProvider> serviceProviderCallback)
+    public FixtureConfiguration WithServiceProviderAvailable(Action<IServiceProvider> serviceProviderAvailable)
     {
-        ServiceProviderCallback = Guard.AgainstNull(serviceProviderCallback);
+        ServiceProviderAvailable = Guard.AgainstNull(serviceProviderAvailable);
         return this;
     }
 
-    public FixtureConfiguration WithRemoveIdsCallback(Func<IServiceProvider, IEnumerable<Guid>, Task> removeIdsCallback)
+    public FixtureConfiguration WithRemoveIds(Func<IServiceProvider, IEnumerable<Guid>, Task> removeIds)
     {
-        RemoveIdsCallback = Guard.AgainstNull(removeIdsCallback);
+        RemoveIds = Guard.AgainstNull(removeIds);
         return this;
     }
 
@@ -44,9 +46,15 @@ public class FixtureConfiguration
         return this;
     }
 
-    public FixtureConfiguration WithEventStreamTaskCallback(Func<IServiceProvider, Func<Task>, Task> eventStreamTaskCallback)
+    public FixtureConfiguration WithEventStreamTask(Func<IServiceProvider, Func<Task>, Task> eventStreamTask)
     {
-        EventStreamTaskCallback = Guard.AgainstNull(eventStreamTaskCallback);
+        EventStreamTask = Guard.AgainstNull(eventStreamTask);
+        return this;
+    }
+
+    public FixtureConfiguration WithItemAdded(Func<IEventHandlerContext<ItemAdded>, Task> itemAdded)
+    {
+        ItemAdded = Guard.AgainstNull(itemAdded);
         return this;
     }
 }
