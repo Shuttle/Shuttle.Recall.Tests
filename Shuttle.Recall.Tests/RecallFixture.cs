@@ -211,7 +211,7 @@ public class RecallFixture
                     }
                 });
 
-                pipelineEventArgs.Pipeline.AddObserver(async (IPipelineContext<OnAfterGetProjectionEvent> pipelineContext) =>
+                pipelineEventArgs.Pipeline.AddObserver(async (IPipelineContext<OnAfterGetEvent> pipelineContext) =>
                 {
                     var processorThreadManagedThreadId = pipelineContext.Pipeline.State.GetProcessorThreadManagedThreadId();
 

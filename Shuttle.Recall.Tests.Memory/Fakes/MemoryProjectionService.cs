@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Shuttle.Core.Contract;
+using Shuttle.Core.Pipelines;
 using Shuttle.Core.Threading;
 
 namespace Shuttle.Recall.Tests.Memory.Fakes;
@@ -29,8 +30,10 @@ public class MemoryProjectionService : IProjectionService
         _eventProcessorConfiguration = Guard.AgainstNull(eventProcessorConfiguration);
     }
 
-    public async Task<ProjectionEvent?> GetProjectionEventAsync(int processorThreadManagedThreadId)
+    public async Task<ProjectionEvent?> GetEventAsync(IPipelineContext<OnGetEvent> pipelineContext)
     {
+        var processorThreadManagedThreadId = Guard.AgainstNull(pipelineContext).Pipeline.State.GetProcessorThreadManagedThreadId();
+
         Projection? projection;
 
         if (_projections.Length == 0)
@@ -71,8 +74,10 @@ public class MemoryProjectionService : IProjectionService
         return threadPrimitiveEvent == null ? null : new ProjectionEvent(projection, threadPrimitiveEvent.PrimitiveEvent);
     }
 
-    public async Task AcknowledgeAsync(ProjectionEvent projectionEvent)
+    public async Task AcknowledgeEventAsync(IPipelineContext<OnAcknowledgeEvent> pipelineContext)
     {
+        var projectionEvent = Guard.AgainstNull(pipelineContext).Pipeline.State.GetProjectionEvent();
+
         await _lock.WaitAsync();
 
         try
