@@ -5,28 +5,22 @@ using Microsoft.Extensions.Logging.Console;
 using Shuttle.Core.Contract;
 using Shuttle.Recall.Logging;
 
-namespace Shuttle.Recall.Tests
+namespace Shuttle.Recall.Tests;
+
+public static class ServiceCollectionExtensions
 {
-    public static class ServiceCollectionExtensions
+    public static IServiceCollection ConfigureLogging(this IServiceCollection services, string test)
     {
-        public static IServiceCollection ConfigureLogging(this IServiceCollection services, string test)
+        Guard.AgainstNull(services);
+
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider>(new FixtureFileLoggerProvider(Guard.AgainstNullOrEmptyString(test))));
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, ConsoleLoggerProvider>());
+
+        services.AddLogging(builder =>
         {
-            Guard.AgainstNull(services, nameof(services));
+            builder.SetMinimumLevel(LogLevel.Trace);
+        });
 
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider>(new FixtureFileLoggerProvider(Guard.AgainstNullOrEmptyString(test, nameof(test)))));
-            services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, ConsoleLoggerProvider>());
-
-            services.AddRecallLogging(builder =>
-            {
-                builder.Options.Threading = true;
-            });
-
-            services.AddLogging(builder =>
-            {
-                builder.SetMinimumLevel(LogLevel.Trace);
-            });
-
-            return services;
-        }
+        return services;
     }
 }

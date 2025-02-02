@@ -3,7 +3,7 @@
 <package>
 	<metadata>
 		<id>Shuttle.Recall.Tests</id>
-		<version>18.0.0</version>
+		<version>20.0.0</version>
 		<authors>Eben Roux</authors>
 		<owners>Eben Roux</owners>
 		<license type="expression">BSD-3-Clause</license>
@@ -12,12 +12,12 @@
 		<readme>docs\README.md</readme>
 		<repository type="git" url="https://github.com/Shuttle/Shuttle.Recall.Tests.git" />
 		<description>Tests to exercise Shuttle.Recall component implementations.</description>
-		<copyright>Copyright (c) 2024, Eben Roux</copyright>
+		<copyright>Copyright (c) 2025, Eben Roux</copyright>
 		<tags>eventsourcing eventsource event-sourcing event-source eventstore event-store</tags>
 		<dependencies>
-      <dependency id="NUnit" version="3.14.0" />
-      <dependency id="Shuttle.Recall" version="18.0.0" />
-      <dependency id="Shuttle.Recall.Logging" version="18.0.0" />
+      <dependency id="NUnit" version="4.2.2" />
+      <dependency id="Shuttle.Recall" version="20.0.0" />
+      <dependency id="Shuttle.Recall.Logging" version="20.0.0" />
 		</dependencies>
 	</metadata>
 	<files>

@@ -1,47 +1,32 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
-namespace Shuttle.Recall.Tests
+namespace Shuttle.Recall.Tests;
+
+public class OrderHandler : IEventHandler<ItemAdded>
 {
-    public class OrderHandler :
-        IEventHandler<ItemAdded>,
-        IEventHandler<OrderSnapshot>,
-        IAsyncEventHandler<ItemAdded>,
-        IAsyncEventHandler<OrderSnapshot>
+    private readonly List<ItemAdded> _events = new();
+    private DateTime _timeOutDate = DateTime.MaxValue;
+    public bool HasTimedOut => _timeOutDate < DateTime.Now;
+
+    public bool IsComplete => _events.Count == 4;
+
+    public async Task ProcessEventAsync(IEventHandlerContext<ItemAdded> context)
     {
-        private int _count;
-        private DateTime _timeOutDate = DateTime.MaxValue;
-
-        public bool IsComplete => _count == 5;
-        public bool HasTimedOut => _timeOutDate < DateTime.Now;
-
-        public void ProcessEvent(IEventHandlerContext<ItemAdded> context)
+        if (_events.FirstOrDefault(item => item.Product.Equals(context.Event.Product, StringComparison.InvariantCultureIgnoreCase)) != null)
         {
-            _count++;
+            return;
         }
 
-        public void ProcessEvent(IEventHandlerContext<OrderSnapshot> context)
-        {
-            _count++;
-        }
+        _events.Add(context.Event);
 
-        public void Start(int handlerTimeoutSeconds)
-        {
-            _timeOutDate = DateTime.Now.AddSeconds(handlerTimeoutSeconds < 5 ? 5 : handlerTimeoutSeconds);
-        }
+        await Task.CompletedTask;
+    }
 
-        public async Task ProcessEventAsync(IEventHandlerContext<ItemAdded> context)
-        {
-            _count++;
-
-            await Task.CompletedTask;
-        }
-
-        public async Task ProcessEventAsync(IEventHandlerContext<OrderSnapshot> context)
-        {
-            _count++;
-
-            await Task.CompletedTask;
-        }
+    public void Start(TimeSpan handlerTimeout)
+    {
+        _timeOutDate = DateTime.Now.Add(handlerTimeout);
     }
 }
