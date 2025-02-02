@@ -41,6 +41,11 @@ public class MemoryPrimitiveEventRepository : IPrimitiveEventRepository
         return sequenceNumber;
     }
 
+    public async ValueTask<long> GetMaxSequenceNumberAsync()
+    {
+        return await _primitiveEventStore.GetMaxSequenceNumberAsync();
+    }
+
     public async Task<IEnumerable<PrimitiveEvent>> GetAsync(Guid id)
     {
         return await _primitiveEventStore.GetAsync(id);

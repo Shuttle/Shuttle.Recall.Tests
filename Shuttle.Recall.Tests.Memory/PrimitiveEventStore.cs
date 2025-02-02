@@ -123,4 +123,9 @@ public class PrimitiveEventStore : IPrimitiveEventStore
             _lock.Release();
         }
     }
+
+    public async Task<long> GetMaxSequenceNumberAsync()
+    {
+        return await Task.FromResult(_sequenceNumber);
+    }
 }
